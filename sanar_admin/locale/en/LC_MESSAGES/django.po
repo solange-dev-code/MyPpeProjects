@@ -1,0 +1,175 @@
+# English translations for Sanar
+# Copyright (C) 2026 Sanar
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Sanar 2.0\n"
+"Report-Msgid-Bugs-To: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Language: en\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+# ─── Auth ───
+msgid "Identifiants incorrects"
+msgstr "Invalid credentials"
+
+msgid "Patient non trouvé"
+msgstr "Patient not found"
+
+msgid "Médecin non trouvé"
+msgstr "Doctor not found"
+
+msgid "Hôpital non trouvé"
+msgstr "Hospital not found"
+
+msgid "Token invalide ou révoqué"
+msgstr "Invalid or revoked token"
+
+# ─── Patient ───
+msgid "Patient"
+msgstr "Patient"
+
+msgid "Patients"
+msgstr "Patients"
+
+msgid "Groupe sanguin"
+msgstr "Blood type"
+
+msgid "Allergies"
+msgstr "Allergies"
+
+# ─── Médecin ───
+msgid "Médecin"
+msgstr "Doctor"
+
+msgid "Médecins"
+msgstr "Doctors"
+
+msgid "Cardiologue"
+msgstr "Cardiologist"
+
+msgid "Généraliste"
+msgstr "General practitioner"
+
+# ─── Hôpital ───
+msgid "Hôpital"
+msgstr "Hospital"
+
+msgid "Hôpitaux"
+msgstr "Hospitals"
+
+# ─── RDV ───
+msgid "Rendez-vous"
+msgstr "Appointment"
+
+msgid "En attente"
+msgstr "Pending"
+
+msgid "Confirmé"
+msgstr "Confirmed"
+
+msgid "Reporté"
+msgstr "Rescheduled"
+
+msgid "Annulé"
+msgstr "Cancelled"
+
+msgid "Terminé"
+msgstr "Completed"
+
+# ─── Urgences ───
+msgid "Demande d'urgence"
+msgstr "Emergency request"
+
+msgid "Demandes d'urgence"
+msgstr "Emergency requests"
+
+msgid "Critique (arrêt cardiaque, traumatisme grave)"
+msgstr "Critical (cardiac arrest, severe trauma)"
+
+msgid "Urgent (douleur aiguë, fracture suspectée)"
+msgstr "Urgent (acute pain, suspected fracture)"
+
+msgid "Modéré (consultation rapide requise)"
+msgstr "Moderate (quick consultation required)"
+
+# ─── File d'attente ───
+msgid "File d'attente"
+msgstr "Waiting queue"
+
+msgid "Files d'attente"
+msgstr "Waiting queues"
+
+msgid "P1 — Critique (réanimation immédiate)"
+msgstr "P1 — Critical (immediate resuscitation)"
+
+msgid "P2 — Urgent (< 15 min)"
+msgstr "P2 — Urgent (< 15 min)"
+
+msgid "P3 — Moins urgent (< 60 min)"
+msgstr "P3 — Less urgent (< 60 min)"
+
+msgid "P4 — Standard (< 2 h)"
+msgstr "P4 — Standard (< 2 h)"
+
+msgid "P5 — Non urgent (< 4 h)"
+msgstr "P5 — Non urgent (< 4 h)"
+
+# ─── Analyses ───
+msgid "Analyse"
+msgstr "Test"
+
+msgid "Analyses"
+msgstr "Tests"
+
+msgid "Type d'analyse"
+msgstr "Test type"
+
+msgid "Types d'analyses"
+msgstr "Test types"
+
+msgid "Résultat d'analyse"
+msgstr "Test result"
+
+msgid "Résultats d'analyse"
+msgstr "Test results"
+
+msgid "Normal"
+msgstr "Normal"
+
+msgid "Haut"
+msgstr "High"
+
+msgid "Bas"
+msgstr "Low"
+
+msgid "Critique"
+msgstr "Critical"
+
+# ─── Téléconsultation ───
+msgid "Téléconsultation"
+msgstr "Teleconsultation"
+
+msgid "Téléconsultations"
+msgstr "Teleconsultations"
+
+msgid "Planifiée"
+msgstr "Scheduled"
+
+msgid "En cours"
+msgstr "In progress"
+
+# ─── Sécurité ───
+msgid "2FA réservé aux médecins et personnel"
+msgstr "2FA restricted to doctors and staff"
+
+msgid "Code requis"
+msgstr "Code required"
+
+msgid "Code invalide"
+msgstr "Invalid code"
+
+msgid "2FA activé avec succès"
+msgstr "2FA successfully enabled"

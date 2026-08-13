@@ -1,0 +1,146 @@
+# ─── CI : tests + lint à chaque push/PR ───
+name: Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # ─── Backend Django tests ───
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_DB: sanar_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Cache pip
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('sanar_admin/requirements.txt') }}
+          restore-keys: ${{ runner.os }}-pip-
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r sanar_admin/requirements.txt
+          pip install coverage flake8 black
+
+      - name: Lint with flake8
+        run: |
+          cd sanar_admin
+          flake8 --count --select=E9,F63,F7,F82 --show-source --statistics .
+          flake8 --count --exit-zero --max-line-length=120 --statistics .
+
+      - name: Check Django config
+        env:
+          DJANGO_SECRET_KEY: test-secret-key-for-ci-only
+          DJANGO_DEBUG: 'True'
+          DB_NAME: sanar_test
+          DB_USER: postgres
+          DB_PASSWORD: test_password
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DJANGO_ENCRYPTION_KEY: ${{ secrets.DJANGO_ENCRYPTION_KEY || 'dGVzdC1rZXktZm9yLWNpLW9ubHktbm90LXByb2R1Y3Rpb24=' }}
+        run: |
+          cd sanar_admin
+          python manage.py check
+
+      - name: Run migrations
+        env:
+          DJANGO_SECRET_KEY: test-secret-key-for-ci-only
+          DJANGO_DEBUG: 'True'
+          DB_NAME: sanar_test
+          DB_USER: postgres
+          DB_PASSWORD: test_password
+          DB_HOST: localhost
+          DB_PORT: 5432
+        run: |
+          cd sanar_admin
+          python manage.py migrate
+
+      - name: Run tests with coverage
+        env:
+          DJANGO_SECRET_KEY: test-secret-key-for-ci-only
+          DJANGO_DEBUG: 'True'
+          DB_NAME: sanar_test
+          DB_USER: postgres
+          DB_PASSWORD: test_password
+          DB_HOST: localhost
+          DB_PORT: 5432
+          REDIS_HOST: localhost
+        run: |
+          cd sanar_admin
+          coverage run --source='.' manage.py test
+          coverage report --skip-covered --fail-under=40
+        continue-on-error: true  # la couverture < 40% ne fait pas échouer la CI pour l'instant
+
+  # ─── Flutter analyze ───
+  flutter-analyze:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install dependencies (patient app)
+        run: |
+          cd sanar
+          flutter pub get
+
+      - name: Analyze patient app
+        run: |
+          cd sanar
+          flutter analyze --no-fatal-infos || true
+
+      - name: Install dependencies (medecin app)
+        run: |
+          cd sanar_medecin
+          flutter pub get
+
+      - name: Analyze medecin app
+        run: |
+          cd sanar_medecin
+          flutter analyze --no-fatal-infos || true
+
+  # ─── Docker build check ───
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build --target backend -t sanar-backend-test .

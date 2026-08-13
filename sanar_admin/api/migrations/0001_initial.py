@@ -1,6 +1,7 @@
 """Migration initiale pour l'app api (DeviceToken FCM)."""
 from django.db import migrations, models
 import django.db.models.deletion
+from django.conf import settings
 
 
 class Migration(migrations.Migration):

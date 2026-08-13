@@ -1,0 +1,27 @@
+name: sanar_medecin
+description: "Application Flutter dediee aux medecins Sanar (consultation, teleconsultation, file d'attente, analyses)."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.5
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  dio: ^5.9.2
+  shared_preferences: ^2.5.5
+  flutter_webrtc: ^0.10.7
+  firebase_messaging: ^15.0.4
+  intl: ^0.19.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

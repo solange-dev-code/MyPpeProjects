@@ -29,6 +29,11 @@ class RendezVous(models.Model):
     )
     note = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    # ── NOUVEAU : ID événement Google Calendar (sync bidirectionnelle) ──
+    google_event_id = models.CharField(
+        max_length=200, blank=True, default='',
+        help_text="ID de l'événement correspondant dans Google Calendar"
+    )
 
     def __str__(self):
         return f"{self.patient} - Dr. {self.medecin.nom} - {self.date}"

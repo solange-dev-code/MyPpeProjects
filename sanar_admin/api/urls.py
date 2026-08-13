@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 
@@ -73,4 +73,11 @@ urlpatterns = [
 
     # ═══ NOUVEAU : Test notification ═══
     path('test-notification/', views.test_notification, name='test_notification'),
+
+    # ═══ NOUVEAU : Health check (monitoring) ═══
+    path('health/', views.health_check, name='health_check'),
+
+    # ═══ NOUVEAU : Téléconsultation (WebRTC) ═══
+    path('teleconsultation/', include('teleconsultation.urls')),
+    path('ml/', include('ml_predictions.urls')),
 ]

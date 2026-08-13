@@ -23,19 +23,46 @@ qrcode==7.4.2
 # ─── Phase 3 : Audit trail (journalisation des actions sensibles) ───
 django-auditlog==3.0.0
 
-# ─── Phase 4 : Export PDF / CSV / FHIR ───
+# ─── Phase 3 : Exports ───
 weasyprint==62.3
 fhir.resources==7.1.0
 reportlab==4.2.5
 
-# ─── Phase 5 : Télécommunications (SMS, push, WhatsApp) ───
+# ─── Phase 3 : Télécommunications (SMS, push, WhatsApp) ───
 twilio==9.3.2
 firebase-admin==6.5.0
 requests==2.32.3
 
-# ─── Phase 6 : Géolocalisation (Haversine, assignation hôpitaux) ───
+# ─── Phase 3 : Géolocalisation (Haversine, assignation hôpitaux) ───
 geopy==2.4.1
 
-# ─── Phase 7 : Tâches asynchrones (export gros dossiers, envoi SMS bulk) ───
+# ─── Phase 3 : Tâches asynchrones (Celery + Redis) ───
 celery==5.4.0
 redis==5.0.8
+
+# ─── Phase 3 : WebRTC téléconsultation (Django Channels) ───
+channels==4.1.0
+channels-redis==4.2.0
+daphne==4.1.2
+
+# ─── Phase 3 : Documentation API Swagger/OpenAPI ───
+drf-spectacular==0.27.2
+
+# ─── Phase 3 : Monitoring (Sentry) ───
+sentry-sdk==2.14.0
+
+# ─── Phase 3 : ML prédictif analyses ───
+scikit-learn==1.5.2
+numpy==2.1.1
+pandas==2.2.3
+
+# ─── Phase 3 : Synchro Google Calendar ───
+google-api-python-client==2.147.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+
+# ─── Phase 3 : Rate limiting ───
+django-ratelimit==4.1.0
+
+# ─── Phase 3 : Serveur WSGI production ───
+gunicorn==23.0.0

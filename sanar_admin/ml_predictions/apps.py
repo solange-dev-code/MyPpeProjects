@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class MlPredictionsConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'ml_predictions'
+    verbose_name = 'Prédictions ML (analyses)'

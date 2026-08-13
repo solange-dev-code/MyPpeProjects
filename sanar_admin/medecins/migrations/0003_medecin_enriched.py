@@ -1,6 +1,7 @@
 """Migration pour ajouter DisponibiliteMedecin, CongeMedecin, user et nouvelles spécialités."""
 from django.db import migrations, models
 import django.db.models.deletion
+from django.conf import settings
 
 
 class Migration(migrations.Migration):

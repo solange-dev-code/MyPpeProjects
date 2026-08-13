@@ -114,3 +114,36 @@ class CongeMedecin(models.Model):
     def couvre(self, date_cible):
         """Retourne True si le congé couvre la date cible."""
         return self.date_debut <= date_cible <= self.date_fin
+
+
+class GoogleCalendarLink(models.Model):
+    """Lien OAuth2 entre un médecin et son Google Calendar.
+
+    Permet la synchronisation bidirectionnelle des rendez-vous.
+    """
+
+    medecin = models.OneToOneField(
+        Medecin, on_delete=models.CASCADE, related_name='google_calendar'
+    )
+    access_token = models.TextField()
+    refresh_token = models.TextField()
+    token_expiry = models.DateTimeField()
+    calendar_id = models.CharField(max_length=200, default='primary')
+    sync_actif = models.BooleanField(default=True)
+    last_sync = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Lien Google Calendar'
+        verbose_name_plural = 'Liens Google Calendar'
+
+    def __str__(self):
+        return f"Google Calendar — {self.medecin}"
+
+    @property
+    def token_valide(self):
+        """True si le token est encore valide."""
+        if not self.token_expiry:
+            return False
+        from django.utils import timezone
+        return self.token_expiry > timezone.now()

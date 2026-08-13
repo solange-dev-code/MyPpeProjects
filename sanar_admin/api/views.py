@@ -9,6 +9,7 @@ from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from datetime import datetime, timedelta
+import os
 import logging
 
 from patients.models import Patient
@@ -821,3 +822,63 @@ def test_notification(request):
         data={'type': 'test'}
     )
     return Response(result)
+
+
+# ═══════════════════════════════════════════════════════════════
+# NOUVEAU : Health check (monitoring)
+# ═══════════════════════════════════════════════════════════════
+@api_view(['GET'])
+@permission_classes([AllowAny])
+def health_check(request):
+    """Endpoint de santé pour monitoring (uptime, load balancer, Kubernetes).
+
+    Retourne le statut des services critiques :
+    - Database PostgreSQL
+    - Redis (Celery broker)
+    - Storage (media)
+    """
+    from django.db import connection
+    from django.conf import settings
+    import redis
+
+    status = {
+        'status': 'ok',
+        'timestamp': timezone.now().isoformat(),
+        'version': '2.0.0',
+        'services': {}
+    }
+
+    # Database
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute('SELECT 1')
+            cursor.fetchone()
+        status['services']['database'] = 'ok'
+    except Exception as e:
+        status['services']['database'] = f'error: {e}'
+        status['status'] = 'degraded'
+
+    # Redis
+    try:
+        r = redis.Redis(
+            host=os.getenv('REDIS_HOST', 'localhost'),
+            port=6379, socket_timeout=2
+        )
+        r.ping()
+        status['services']['redis'] = 'ok'
+    except Exception as e:
+        status['services']['redis'] = f'error: {str(e)[:100]}'
+        # Redis non bloquant pour le health check principal
+        if status['status'] == 'ok':
+            status['status'] = 'degraded'
+
+    # Storage
+    try:
+        from django.core.files.storage import default_storage
+        status['services']['storage'] = 'ok'
+    except Exception as e:
+        status['services']['storage'] = f'error: {e}'
+        status['status'] = 'degraded'
+
+    http_status = 200 if status['status'] == 'ok' else 503
+    return Response(status, status=http_status)

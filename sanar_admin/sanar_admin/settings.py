@@ -59,6 +59,8 @@ INSTALLED_APPS = [
     'django_otp.plugins.otp_static',
     'auditlog',                         # audit trail (phase 3)
     'cryptography',                     # django-cryptography (phase 3)
+    'drf_spectacular',                  # Swagger/OpenAPI (phase 3)
+    'channels',                         # WebRTC signaling WebSocket (phase 3)
     # Apps Sanar
     'dashboard',
     'patients',
@@ -78,12 +80,15 @@ INSTALLED_APPS = [
     'urgences',                         # module urgences + QR code (phase 2)
     'file_attente',                     # file d'attente temps réel (phase 2)
     'exports',                          # export PDF/CSV/FHIR (phase 4)
+    'teleconsultation',                 # WebRTC téléconsultation (phase 3)
+    'ml_predictions',                   # ML prédictif analyses (phase 3)
 ]
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',  # ← en premier
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.locale.LocaleMiddleware',  # i18n (phase 3)
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -144,7 +149,6 @@ PASSWORD_HASHERS = [
 
 LANGUAGE_CODE = 'fr-fr'
 TIME_ZONE = 'Africa/Lome'
-USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = '/static/'
@@ -168,7 +172,77 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
+
+# ──────────────────────────────────────────────────────────────
+# 10. drf-spectacular (Swagger/OpenAPI) — phase 3
+# ──────────────────────────────────────────────────────────────
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'Sanar API',
+    'DESCRIPTION': 'Application médicale fullstack — API REST pour patients, médecins et personnel',
+    'VERSION': '2.0.0',
+    'SERVE_INCLUDE': False,
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SCHEMA_PATH_PREFIX': '/api/',
+}
+
+# ──────────────────────────────────────────────────────────────
+# 11. Django Channels (WebRTC signaling) — phase 3
+# ──────────────────────────────────────────────────────────────
+ASGI_APPLICATION = 'sanar_admin.asgi.application'
+CHANNEL_LAYERS = {
+    'default': {
+        'BACKEND': 'channels_redis.core.RedisChannelLayer',
+        'CONFIG': {
+            'hosts': [(os.getenv('REDIS_HOST', 'localhost'), 6379)],
+        },
+    },
+}
+
+# ──────────────────────────────────────────────────────────────
+# 12. Celery — tâches asynchrones (phase 3)
+# ──────────────────────────────────────────────────────────────
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = TIME_ZONE
+
+# ──────────────────────────────────────────────────────────────
+# 13. Sentry — monitoring erreurs (phase 3)
+# ──────────────────────────────────────────────────────────────
+SENTRY_DSN = os.getenv('SENTRY_DSN', '')
+if SENTRY_DSN and not DEBUG:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=0.1,
+        send_default_pii=False,  # RGPD — ne pas envoyer de PII
+    )
+
+# ──────────────────────────────────────────────────────────────
+# 14. Rate limiting — protection endpoint public urgence (phase 3)
+# ──────────────────────────────────────────────────────────────
+RATELIMIT_ENABLE = True
+RATELIMIT_USE_CACHE = 'default'
+
+# ──────────────────────────────────────────────────────────────
+# 15. Internationalisation (i18n) — phase 3
+# ──────────────────────────────────────────────────────────────
+LANGUAGE_CODE = 'fr-fr'
+LANGUAGES = [
+    ('fr', 'Français'),
+    ('en', 'English'),
+]
+LOCALE_PATHS = [
+    BASE_DIR / 'locale',
+]
+USE_I18N = True
+USE_L10N = True
 
 # JWT — durées plus courtes (sécurité)
 SIMPLE_JWT = {

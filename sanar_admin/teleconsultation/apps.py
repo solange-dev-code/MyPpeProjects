@@ -1,0 +1,7 @@
+from django.apps import AppConfig
+
+
+class TeleconsultationConfig(AppConfig):
+    default_auto_field = 'django.db.models.BigAutoField'
+    name = 'teleconsultation'
+    verbose_name = 'Téléconsultation WebRTC'

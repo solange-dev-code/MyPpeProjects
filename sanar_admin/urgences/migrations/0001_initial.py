@@ -1,5 +1,6 @@
 """Migration initiale pour l'app urgences."""
 from django.db import migrations, models
+from django.conf import settings
 import django.db.models.deletion
 import uuid
 
