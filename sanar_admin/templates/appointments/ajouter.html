@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Nouveau rendez-vous{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Nouveau rendez-vous</div>
+        <div class="page-subtitle">Planifier un nouveau rendez-vous médical</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="chart-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+
+                    <!-- Recherche patient -->
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            Rechercher un patient *
+                        </label>
+                        <input type="text" id="searchPatient"
+                               class="form-control mb-2"
+                               placeholder="Tapez le nom du patient..."
+                               onkeyup="filtrerPatients()">
+                        <select name="patient" id="selectPatient"
+                                class="form-select" required size="4"
+                                style="height:auto;">
+                            {% for p in patients %}
+                            <option value="{{ p.pk }}">
+                                {{ p.prenom }} {{ p.nom }} — {{ p.patient_id }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Date *</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Heure *</label>
+                        <input type="time" name="heure" class="form-control" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Motif *</label>
+                        <input type="text" name="motif" class="form-control"
+                               placeholder="Ex: Consultation de routine" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Note</label>
+                        <textarea name="note" class="form-control" rows="3"
+                                  placeholder="Informations supplémentaires...">
+                        </textarea>
+                    </div>
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button type="submit" class="btn-primary-sanar">
+                            <i class="bi bi-plus-lg"></i> Créer le rendez-vous
+                        </button>
+                        <a href="{% url 'appointments:liste' %}"
+                           class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-info-circle text-primary"></i> Info
+            </h6>
+            <p style="font-size:13px;color:#64748b;">
+                Le rendez-vous sera visible sur l'application mobile Flutter 
+                du patient avec le statut "En attente".
+            </p>
+            <hr>
+            <p style="font-size:13px;color:#64748b;">
+                <i class="bi bi-bell text-warning"></i>
+                Une notification sera envoyée au patient sur son 
+                application mobile.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function filtrerPatients() {
+    const recherche = document.getElementById('searchPatient').value.toLowerCase();
+    const select = document.getElementById('selectPatient');
+    const options = select.getElementsByTagName('option');
+    for (let i = 0; i < options.length; i++) {
+        const texte = options[i].text.toLowerCase();
+        options[i].style.display = texte.includes(recherche) ? '' : 'none';
+    }
+}
+</script>
+{% endblock %}

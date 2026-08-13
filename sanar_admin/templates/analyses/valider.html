@@ -1,0 +1,135 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter résultat{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Ajouter un résultat</div>
+        <div class="page-subtitle">
+            {{ analyse.get_type_analyse_display }} — 
+            {{ analyse.patient.prenom }} {{ analyse.patient.nom }}
+        </div>
+    </div>
+    <a href="{% url 'analyses:liste' %}"
+       class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+{% if messages %}
+{% for message in messages %}
+<div class="alert alert-{{ message.tags }} mb-3">{{ message }}</div>
+{% endfor %}
+{% endif %}
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="chart-card">
+
+            <!-- Infos analyse -->
+            <div class="mb-4 p-3"
+                 style="background:#f8fafc;border-radius:10px;
+                        border:1px solid #e2e8f0;">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <span style="font-size:12px;color:#94a3b8;">Patient</span>
+                        <div class="fw-semibold">
+                            {{ analyse.patient.prenom }} {{ analyse.patient.nom }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <span style="font-size:12px;color:#94a3b8;">Type</span>
+                        <div class="fw-semibold">
+                            {{ analyse.get_type_analyse_display }}
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <span style="font-size:12px;color:#94a3b8;">
+                            Laboratoire
+                        </span>
+                        <div class="fw-semibold">{{ analyse.laboratoire }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <span style="font-size:12px;color:#94a3b8;">Date</span>
+                        <div class="fw-semibold">
+                            {{ analyse.date|date:"d/m/Y" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Résultat *
+                    </label>
+                    <textarea name="resultat" class="form-control"
+                              rows="4"
+                              placeholder="Décrivez les résultats de l'analyse..."
+                              required></textarea>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Conclusion</label>
+                    <textarea name="conclusion" class="form-control"
+                              rows="2"
+                              placeholder="Conclusion médicale..."></textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        Fichier résultat (PDF, image)
+                    </label>
+                    <div style="border:2px dashed #e2e8f0;border-radius:12px;
+                                padding:20px;text-align:center;
+                                background:#f8fafc;">
+                        <i class="bi bi-cloud-arrow-up"
+                           style="font-size:28px;color:#94a3b8;"></i>
+                        <div style="font-size:13px;color:#64748b;margin:6px 0;">
+                            PDF, images médicales — Max 10 Mo
+                        </div>
+                        <input type="file" name="fichier_pdf"
+                               class="form-control"
+                               accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-primary-sanar">
+                        <i class="bi bi-check-circle"></i>
+                        Valider et rendre disponible
+                    </button>
+                    <a href="{% url 'analyses:liste' %}"
+                       class="btn btn-outline-secondary">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-info-circle text-primary"></i> Info
+            </h6>
+            <p style="font-size:13px;color:#64748b;">
+                Une fois validé, le résultat sera visible sur l'application 
+                mobile Flutter du patient dans la section 
+                <strong>Résultats d'analyses</strong>.
+            </p>
+            <hr>
+            <p style="font-size:13px;color:#64748b;">
+                <i class="bi bi-folder2-open text-warning"></i>
+                Le fichier sera aussi ajouté automatiquement au 
+                <strong>dossier médical</strong> du patient.
+            </p>
+            <hr>
+            <div style="background:#FEF3C7;border-radius:8px;
+                        padding:10px 14px;">
+                <p style="font-size:13px;color:#D97706;margin:0;">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Attention :</strong> Cette action est irréversible.
+                    Le statut passera à "Disponible".
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

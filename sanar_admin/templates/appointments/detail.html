@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+{% block title %}Détail Rendez-vous{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Rendez-vous</div>
+        <div class="page-subtitle">
+            {{ rdv.patient.prenom }} {{ rdv.patient.nom }}
+            — {{ rdv.date|date:"d/m/Y" }}
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'appointments:liste' %}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <a href="{% url 'appointments:modifier_statut' rdv.pk %}"
+           class="btn-primary-sanar">
+            <i class="bi bi-pencil"></i> Modifier statut
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">Informations du rendez-vous</h6>
+            <table class="table">
+                <tr>
+                    <td class="text-muted" style="width:40%;">Patient</td>
+                    <td class="fw-semibold">
+                        {{ rdv.patient.prenom }} {{ rdv.patient.nom }}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Médecin</td>
+                    <td class="fw-semibold">
+                        Dr. {{ rdv.medecin.prenom }} {{ rdv.medecin.nom }}
+                        <span class="text-muted" style="font-size:12px;">
+                            — {{ rdv.medecin.get_specialite_display }}
+                        </span>
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Date</td>
+                    <td>{{ rdv.date|date:"d/m/Y" }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Heure</td>
+                    <td>{{ rdv.heure|time:"H:i" }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Motif</td>
+                    <td>{{ rdv.motif }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Note</td>
+                    <td>{{ rdv.note|default:"—" }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Statut</td>
+                    <td>
+                        {% if rdv.statut == 'en_attente' %}
+                        <span class="badge"
+                              style="background:#FEF3C7;color:#D97706;">En attente</span>
+                        {% elif rdv.statut == 'confirme' %}
+                        <span class="badge"
+                              style="background:#DCFCE7;color:#16A34A;">Confirmé</span>
+                        {% elif rdv.statut == 'reporte' %}
+                        <span class="badge"
+                              style="background:#F3E8FF;color:#9333EA;">Reporté</span>
+                        {% elif rdv.statut == 'annule' %}
+                        <span class="badge"
+                              style="background:#FEE2E2;color:#DC2626;">Annulé</span>
+                        {% else %}
+                        <span class="badge"
+                              style="background:#DBEAFE;color:#2563EB;">Terminé</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Cabinet</td>
+                    <td>{{ rdv.medecin.cabinet|default:"—" }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Téléphone médecin</td>
+                    <td>{{ rdv.medecin.telephone }}</td>
+                </tr>
+            </table>
+
+            <!-- Actions rapides -->
+            {% if rdv.statut == 'en_attente' %}
+            <div class="d-flex gap-2 mt-3">
+                <form method="post"
+                      action="{% url 'appointments:modifier_statut' rdv.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="statut" value="confirme">
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="bi bi-check-circle"></i> Confirmer
+                    </button>
+                </form>
+                <form method="post"
+                      action="{% url 'appointments:modifier_statut' rdv.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="statut" value="annule">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="bi bi-x-circle"></i> Annuler
+                    </button>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="chart-card mb-3">
+            <h6 class="fw-bold mb-3">Patient</h6>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div style="width:48px;height:48px;background:#eff6ff;
+                            border-radius:50%;display:flex;align-items:center;
+                            justify-content:center;color:#2563EB;
+                            font-weight:700;font-size:16px;">
+                    {{ rdv.patient.prenom|first }}{{ rdv.patient.nom|first }}
+                </div>
+                <div>
+                    <div class="fw-bold">
+                        {{ rdv.patient.prenom }} {{ rdv.patient.nom }}
+                    </div>
+                    <div class="text-muted" style="font-size:13px;">
+                        {{ rdv.patient.patient_id }}
+                    </div>
+                    <div style="font-size:13px;">{{ rdv.patient.telephone }}</div>
+                </div>
+            </div>
+            <a href="{% url 'patients:dossier' rdv.patient.pk %}"
+               class="btn btn-outline-primary btn-sm w-100">
+                <i class="bi bi-folder2-open"></i> Voir dossier médical
+            </a>
+        </div>
+
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">Médecin</h6>
+            <div class="fw-bold">
+                Dr. {{ rdv.medecin.prenom }} {{ rdv.medecin.nom }}
+            </div>
+            <div class="text-muted" style="font-size:13px;">
+                {{ rdv.medecin.get_specialite_display }}
+            </div>
+            <div style="font-size:13px;">{{ rdv.medecin.telephone }}</div>
+            <div style="font-size:13px;">{{ rdv.medecin.cabinet|default:"—" }}</div>
+        </div>
+    </div>
+</div>
+{% endblock %}

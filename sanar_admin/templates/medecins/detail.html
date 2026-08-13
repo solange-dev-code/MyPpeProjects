@@ -1,0 +1,183 @@
+{% extends 'base.html' %}
+{% block title %}Profil Médecin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">
+            Dr. {{ medecin.prenom }} {{ medecin.nom }}
+        </div>
+        <div class="page-subtitle">
+            {{ medecin.get_specialite_display }}
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'medecins:liste' %}"
+           class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left"></i> Retour
+        </a>
+        <a href="{% url 'medecins:modifier' medecin.pk %}"
+           class="btn-primary-sanar">
+            <i class="bi bi-pencil"></i> Modifier
+        </a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="chart-card mb-3">
+            <div class="text-center mb-3">
+                <div style="width:80px;height:80px;background:#eff6ff;
+                            border-radius:50%;display:flex;align-items:center;
+                            justify-content:center;color:#2563EB;
+                            font-weight:700;font-size:28px;margin:0 auto;">
+                    {{ medecin.prenom|first }}{{ medecin.nom|first }}
+                </div>
+                <div class="fw-bold mt-2" style="font-size:18px;">
+                    Dr. {{ medecin.prenom }} {{ medecin.nom }}
+                </div>
+                <span class="badge"
+                      style="background:#eff6ff;color:#2563EB;font-size:13px;">
+                    {{ medecin.get_specialite_display }}
+                </span>
+            </div>
+            <hr>
+            <div style="font-size:13px;">
+                <div class="mb-2">
+                    <i class="bi bi-telephone text-primary"></i>
+                    <span class="ms-2">{{ medecin.telephone }}</span>
+                </div>
+                <div class="mb-2">
+                    <i class="bi bi-envelope text-primary"></i>
+                    <span class="ms-2">{{ medecin.email|default:"—" }}</span>
+                </div>
+                <div class="mb-2">
+                    <i class="bi bi-building text-primary"></i>
+                    <span class="ms-2">{{ medecin.cabinet|default:"—" }}</span>
+                </div>
+                <div>
+                    <i class="bi bi-circle-fill"
+                       style="font-size:8px;color:{% if medecin.est_actif %}#16A34A{% else %}#DC2626{% endif %};"></i>
+                    <span class="ms-2">
+                        {% if medecin.est_actif %}Actif{% else %}Inactif{% endif %}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stats -->
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">Statistiques</h6>
+            <div class="d-flex justify-content-between mb-2">
+                <span style="font-size:13px;color:#64748b;">Total RDV</span>
+                <span class="fw-bold">{{ total_rdvs }}</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span style="font-size:13px;color:#64748b;">Consultations</span>
+                <span class="fw-bold">{{ total_consultations }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <!-- Derniers RDV -->
+        <div class="chart-card mb-3">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-calendar-check text-primary"></i>
+                Derniers rendez-vous
+            </h6>
+            {% if rdvs %}
+            <table class="table table-sm table-hover">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        <th style="font-size:12px;color:#2563EB;">PATIENT</th>
+                        <th style="font-size:12px;color:#2563EB;">DATE</th>
+                        <th style="font-size:12px;color:#2563EB;">MOTIF</th>
+                        <th style="font-size:12px;color:#2563EB;">STATUT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for rdv in rdvs %}
+                    <tr>
+                        <td style="font-size:13px;">
+                            {{ rdv.patient.prenom }} {{ rdv.patient.nom }}
+                        </td>
+                        <td style="font-size:13px;color:#64748b;">
+                            {{ rdv.date|date:"d/m/Y" }}
+                        </td>
+                        <td style="font-size:13px;">{{ rdv.motif }}</td>
+                        <td>
+                            {% if rdv.statut == 'confirme' %}
+                            <span class="badge"
+                                  style="background:#DCFCE7;color:#16A34A;font-size:11px;">
+                                Confirmé
+                            </span>
+                            {% elif rdv.statut == 'en_attente' %}
+                            <span class="badge"
+                                  style="background:#FEF3C7;color:#D97706;font-size:11px;">
+                                En attente
+                            </span>
+                            {% else %}
+                            <span class="badge"
+                                  style="background:#F1F5F9;color:#64748b;font-size:11px;">
+                                {{ rdv.get_statut_display }}
+                            </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center text-muted py-3" style="font-size:13px;">
+                Aucun rendez-vous
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Dernières consultations -->
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-clipboard2-pulse text-success"></i>
+                Dernières consultations
+            </h6>
+            {% if consultations %}
+            <table class="table table-sm table-hover">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        <th style="font-size:12px;color:#2563EB;">PATIENT</th>
+                        <th style="font-size:12px;color:#2563EB;">DATE</th>
+                        <th style="font-size:12px;color:#2563EB;">MOTIF</th>
+                        <th style="font-size:12px;color:#2563EB;">STATUT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for c in consultations %}
+                    <tr>
+                        <td style="font-size:13px;">
+                            {{ c.patient.prenom }} {{ c.patient.nom }}
+                        </td>
+                        <td style="font-size:13px;color:#64748b;">
+                            {{ c.date|date:"d/m/Y" }}
+                        </td>
+                        <td style="font-size:13px;">{{ c.motif }}</td>
+                        <td>
+                            <span class="badge"
+                                  style="background:#DCFCE7;color:#16A34A;
+                                         font-size:11px;">
+                                {{ c.get_statut_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center text-muted py-3" style="font-size:13px;">
+                Aucune consultation
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

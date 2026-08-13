@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% block title %}Nouvel événement{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Nouvel événement</div>
+        <div class="page-subtitle">Ajouter un événement au calendrier</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Titre *</label>
+                        <input type="text" name="titre" class="form-control"
+                               placeholder="Ex: Réunion hebdomadaire" required
+                               value="{{ request.GET.date }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Type</label>
+                        <select name="type_evenement" class="form-select">
+                            <option value="rendez_vous">Rendez-Vous</option>
+                            <option value="consultation">Consultation</option>
+                            <option value="reunion">Réunion</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Couleur</label>
+                        <select name="couleur" class="form-select">
+                            <option value="blue">🔵 Bleu</option>
+                            <option value="green">🟢 Vert</option>
+                            <option value="orange">🟠 Orange</option>
+                            <option value="red">🔴 Rouge</option>
+                            <option value="purple">🟣 Violet</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Date et heure début *</label>
+                        <input type="datetime-local" name="date_debut"
+                               class="form-control" required
+                               value="{{ request.GET.date }}T09:00">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Date et heure fin</label>
+                        <input type="datetime-local" name="date_fin"
+                               class="form-control">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Description</label>
+                        <textarea name="description" class="form-control" rows="3"
+                                  placeholder="Détails de l'événement..."></textarea>
+                    </div>
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button type="submit" class="btn-primary-sanar">
+                            <i class="bi bi-plus-lg"></i> Créer l'événement
+                        </button>
+                        <a href="{% url 'calendrier:calendrier' %}"
+                           class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-info-circle text-primary"></i> Info
+            </h6>
+            <p style="font-size:13px;color:#64748b;">
+                Les rendez-vous créés depuis l'application mobile Flutter 
+                apparaissent automatiquement dans ce calendrier.
+            </p>
+            <hr>
+            <p style="font-size:13px;color:#64748b;">
+                <i class="bi bi-phone text-success"></i>
+                Les patients reçoivent une notification sur leur 
+                application mobile lors de la création d'un événement.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

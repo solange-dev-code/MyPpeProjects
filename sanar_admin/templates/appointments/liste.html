@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+{% block title %}Rendez-vous{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Gestion Des Rendez-Vous</div>
+        <div class="page-subtitle">Suivi et gestion des rendez-vous médicaux</div>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-clockwise"></i> Mise à jour
+        </button>
+        <a href="{% url 'appointments:ajouter' %}" class="btn-primary-sanar">
+            <i class="bi bi-plus-lg"></i> Nouveau rendez-vous
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Rendez-Vous</div>
+                    <div class="stat-value">{{ total }}</div>
+                    <div class="stat-change">↑ Ce mois</div>
+                </div>
+                <i class="bi bi-calendar-check stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card orange">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">En attente</div>
+                    <div class="stat-value">{{ en_attente }}</div>
+                    <div class="stat-change" style="color:#D97706;">
+                        ⚠ À confirmer
+                    </div>
+                </div>
+                <i class="bi bi-hourglass stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Reportés</div>
+                    <div class="stat-value">{{ reportes }}</div>
+                    <div class="stat-change" style="color:#64748b;">
+                        → À replanifier
+                    </div>
+                </div>
+                <i class="bi bi-calendar-x stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card red">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Annulés</div>
+                    <div class="stat-value">{{ annules }}</div>
+                    <div class="stat-change" style="color:#DC2626;">
+                        ↓ Ce mois
+                    </div>
+                </div>
+                <i class="bi bi-x-circle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres + Liste -->
+<div class="chart-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:#1e293b;">Liste des Rendez-Vous</h6>
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="q" value="{{ recherche }}"
+                   class="form-control form-control-sm"
+                   placeholder="Rechercher patient, médecin..."
+                   style="width:200px;">
+            <select name="statut" class="form-select form-select-sm"
+                    style="width:150px;" onchange="this.form.submit()">
+                <option value="">Tous les statuts</option>
+                <option value="en_attente" 
+                    {% if statut_filtre == 'en_attente' %}selected{% endif %}>
+                    En attente
+                </option>
+                <option value="confirme" 
+                    {% if statut_filtre == 'confirme' %}selected{% endif %}>
+                    Confirmé
+                </option>
+                <option value="reporte" 
+                    {% if statut_filtre == 'reporte' %}selected{% endif %}>
+                    Reporté
+                </option>
+                <option value="annule" 
+                    {% if statut_filtre == 'annule' %}selected{% endif %}>
+                    Annulé
+                </option>
+                <option value="termine" 
+                    {% if statut_filtre == 'termine' %}selected{% endif %}>
+                    Terminé
+                </option>
+            </select>
+            <input type="date" name="date" value="{{ date_filtre }}"
+                   class="form-control form-control-sm" style="width:160px;"
+                   onchange="this.form.submit()">
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-search"></i>
+            </button>
+        </form>
+    </div>
+
+    <table class="table table-hover">
+        <thead style="background:#f8fafc;">
+            <tr>
+                <th><input type="checkbox"></th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">PATIENT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">MÉDECIN</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">SPÉCIALITÉ</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">MOTIF</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">DATE & HEURE</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">STATUT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rdv in rdvs %}
+            <tr>
+                <td><input type="checkbox"></td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:34px;height:34px;background:#eff6ff;
+                                    border-radius:50%;display:flex;align-items:center;
+                                    justify-content:center;color:#2563EB;
+                                    font-weight:700;font-size:12px;">
+                            {{ rdv.patient.prenom|first }}{{ rdv.patient.nom|first }}
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                                {{ rdv.patient.prenom }} {{ rdv.patient.nom }}
+                            </div>
+                            <div style="font-size:11px;color:#94a3b8;">
+                                {{ rdv.patient.telephone }}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                        Dr. {{ rdv.medecin.nom }}
+                    </div>
+                </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {{ rdv.medecin.get_specialite_display }}
+                </td>
+                <td style="font-size:13px;color:#1e293b;">
+                    {{ rdv.motif|truncatechars:30 }}
+                </td>
+                <td>
+                    <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                        {{ rdv.date|date:"d/m/Y" }}
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;">
+                        {{ rdv.heure|time:"H:i" }}
+                    </div>
+                </td>
+                <td>
+                    {% if rdv.statut == 'en_attente' %}
+                        <span class="badge" 
+                              style="background:#FEF3C7;color:#D97706;font-size:12px;">
+                            <i class="bi bi-clock"></i> En attente
+                        </span>
+                    {% elif rdv.statut == 'confirme' %}
+                        <span class="badge" 
+                              style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                            <i class="bi bi-check-circle"></i> Confirmé
+                        </span>
+                    {% elif rdv.statut == 'reporte' %}
+                        <span class="badge" 
+                              style="background:#F3E8FF;color:#9333EA;font-size:12px;">
+                            <i class="bi bi-calendar-x"></i> Reporté
+                        </span>
+                    {% elif rdv.statut == 'annule' %}
+                        <span class="badge" 
+                              style="background:#FEE2E2;color:#DC2626;font-size:12px;">
+                            <i class="bi bi-x-circle"></i> Annulé
+                        </span>
+                    {% else %}
+                        <span class="badge" 
+                              style="background:#DBEAFE;color:#2563EB;font-size:12px;">
+                            <i class="bi bi-check2-all"></i> Terminé
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                data-bs-toggle="dropdown">···</button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" 
+                                   href="{% url 'appointments:detail' rdv.pk %}">
+                                    <i class="bi bi-eye"></i> Voir détails
+                                </a>
+                            </li>
+                            {% if rdv.statut == 'en_attente' %}
+                            <li>
+                                <form method="post" 
+                                      action="{% url 'appointments:modifier_statut' rdv.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="statut" value="confirme">
+                                    <button type="submit" class="dropdown-item text-success">
+                                        <i class="bi bi-check-circle"></i> Confirmer
+                                    </button>
+                                </form>
+                            </li>
+                            <li>
+                                <form method="post" 
+                                      action="{% url 'appointments:modifier_statut' rdv.pk %}">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="statut" value="annule">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-x-circle"></i> Annuler
+                                    </button>
+                                </form>
+                            </li>
+                            {% endif %}
+                            <li>
+                                <a class="dropdown-item" 
+                                   href="{% url 'appointments:modifier_statut' rdv.pk %}">
+                                    <i class="bi bi-pencil"></i> Modifier statut
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-5">
+                    <i class="bi bi-calendar2-x" style="font-size:32px;"></i>
+                    <div class="mt-2">Aucun rendez-vous trouvé</div>
+                    <a href="{% url 'appointments:ajouter' %}" 
+                       class="btn-primary-sanar d-inline-flex mt-3">
+                        <i class="bi bi-plus-lg"></i> Nouveau rendez-vous
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div style="font-size:13px;color:#64748b;">
+            {{ rdvs.count }} rendez-vous trouvé(s)
+        </div>
+        <nav>
+            <ul class="pagination pagination-sm mb-0">
+                <li class="page-item">
+                    <a class="page-link" href="#">Précédent</a>
+                </li>
+                <li class="page-item active">
+                    <a class="page-link" href="#">1</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="#">2</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="#">Suivant</a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+</div>
+{% endblock %}

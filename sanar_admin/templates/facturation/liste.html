@@ -1,0 +1,386 @@
+{% extends 'base.html' %}
+{% block title %}Facturation{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Gestion des Factures</div>
+        <div class="page-subtitle">
+            Suivi de la facturation, paiements et recouvrements
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download"></i> Exporter
+        </button>
+        <a href="{% url 'facturation:ajouter' %}" class="btn-primary-sanar">
+            <i class="bi bi-plus-lg"></i> Nouvelle facture
+        </a>
+    </div>
+</div>
+
+<!-- Format export -->
+<div class="chart-card mb-4" style="padding:16px 20px;">
+    <div class="d-flex align-items-center gap-3">
+        <span style="font-size:14px;font-weight:600;color:#1e293b;">
+            Format d'export
+        </span>
+        <select class="form-select form-select-sm" style="width:120px;">
+            <option>PDF</option>
+            <option>Excel</option>
+            <option>CSV</option>
+        </select>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Total Facturé</div>
+                    <div class="stat-value" style="font-size:24px;">
+                        {{ total_facture|floatformat:0 }} F
+                    </div>
+                    <div class="stat-change">↑ +12% cette semaine</div>
+                </div>
+                <i class="bi bi-receipt stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Encaissé Patient</div>
+                    <div class="stat-value" style="font-size:24px;">
+                        {{ encaisse|floatformat:0 }} F
+                    </div>
+                    <div class="stat-change" style="color:#64748b;">
+                        Espèces / Mobile Money / TPE
+                    </div>
+                </div>
+                <i class="bi bi-cash-coin stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card orange">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Part Assurances</div>
+                    <div class="stat-value" style="font-size:24px;">
+                        {{ part_assurance|floatformat:0 }} F
+                    </div>
+                    <div class="stat-change" style="color:#64748b;">
+                        Prises en charge validées
+                    </div>
+                </div>
+                <i class="bi bi-shield-check stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card red">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Reste à Recouvrer</div>
+                    <div class="stat-value" style="font-size:24px;color:#DC2626;">
+                        {{ reste|floatformat:0 }} F
+                    </div>
+                    <div class="stat-change" style="color:#DC2626;">
+                        Factures impayées / partielles
+                    </div>
+                </div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts + Derniers paiements -->
+<div class="row g-3 mb-4">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">
+                Répartition des paiements (7 derniers jours)
+            </h6>
+            <div class="d-flex gap-3 mb-3">
+                <span style="font-size:12px;">
+                    <span style="display:inline-block;width:12px;height:12px;
+                                 background:#16A34A;border-radius:2px;
+                                 margin-right:4px;"></span>
+                    Encaissé patient
+                </span>
+                <span style="font-size:12px;">
+                    <span style="display:inline-block;width:12px;height:12px;
+                                 background:#06B6D4;border-radius:2px;
+                                 margin-right:4px;"></span>
+                    Part assurance
+                </span>
+            </div>
+            <canvas id="paiementsChart" height="140"></canvas>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="chart-card h-100">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">
+                Derniers paiements reçus
+            </h6>
+            {% for f in derniers_paiements %}
+            <div class="activity-item">
+                <div class="activity-icon" 
+                     style="background:#f0fdf4;color:#16A34A;">
+                    <i class="bi bi-cash"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                        {{ f.get_moyen_paiement_display }}
+                    </div>
+                    <div style="font-size:12px;color:#94a3b8;">
+                        Patient : {{ f.patient.prenom }} {{ f.patient.nom }}
+                    </div>
+                </div>
+                <div style="font-size:13px;font-weight:700;color:#16A34A;">
+                    +{{ f.part_patient|floatformat:0 }} F
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center text-muted py-3">
+                <i class="bi bi-inbox"></i> Aucun paiement récent
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Historique factures -->
+<div class="chart-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:#1e293b;">Historique des factures</h6>
+        <div class="d-flex gap-2">
+            <form method="get" class="d-flex gap-2">
+                <input type="text" name="q" value="{{ recherche }}"
+                       class="form-control form-control-sm"
+                       placeholder="Rechercher patient, médecin..."
+                       style="width:220px;">
+                <select name="statut" class="form-select form-select-sm"
+                        style="width:150px;" onchange="this.form.submit()">
+                    <option value="">Tous les statuts</option>
+                    <option value="payee" 
+                        {% if statut_filtre == 'payee' %}selected{% endif %}>
+                        Payée
+                    </option>
+                    <option value="en_attente" 
+                        {% if statut_filtre == 'en_attente' %}selected{% endif %}>
+                        En attente
+                    </option>
+                    <option value="partiel" 
+                        {% if statut_filtre == 'partiel' %}selected{% endif %}>
+                        Partiel
+                    </option>
+                    <option value="annulee" 
+                        {% if statut_filtre == 'annulee' %}selected{% endif %}>
+                        Annulée
+                    </option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-clockwise"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <table class="table table-hover">
+        <thead style="background:#f8fafc;">
+            <tr>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    N° FACTURE
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">PATIENT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">MÉDECIN</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    ACTE / PRESTATION
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    MONTANT TOTAL
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    PART PATIENT
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    PART ASSURANCE
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">DATE</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">STATUT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for f in factures %}
+            <tr>
+                <td>
+                    <div style="font-size:13px;font-weight:600;color:#2563EB;">
+                        {{ f.facture_id }}
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:32px;height:32px;background:#eff6ff;
+                                    border-radius:50%;display:flex;align-items:center;
+                                    justify-content:center;color:#2563EB;
+                                    font-weight:700;font-size:11px;">
+                            {{ f.patient.prenom|first }}{{ f.patient.nom|first }}
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                                {{ f.patient.prenom }} {{ f.patient.nom }}
+                            </div>
+                            <div style="font-size:11px;color:#94a3b8;">
+                                {{ f.patient.telephone }}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    {% if f.medecin %}
+                    <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                        Dr. {{ f.medecin.nom }}
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;">
+                        {{ f.medecin.get_specialite_display }}
+                    </div>
+                    {% else %}
+                    <span style="color:#94a3b8;font-size:13px;">—</span>
+                    {% endif %}
+                </td>
+                <td style="font-size:13px;color:#1e293b;">
+                    {{ f.description }}
+                </td>
+                <td style="font-size:13px;font-weight:700;color:#1e293b;">
+                    {{ f.montant_total|floatformat:0 }} F
+                </td>
+                <td style="font-size:13px;color:#1e293b;">
+                    {{ f.part_patient|floatformat:0 }} F
+                </td>
+                <td style="font-size:13px;color:#1e293b;">
+                    {{ f.part_assurance|floatformat:0 }} F
+                </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {{ f.date_facture|date:"d/m/Y" }}
+                </td>
+                <td>
+                    {% if f.statut == 'payee' %}
+                        <span class="badge" 
+                              style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                            Payé
+                        </span>
+                    {% elif f.statut == 'partiel' %}
+                        <span class="badge" 
+                              style="background:#FEF3C7;color:#D97706;font-size:12px;">
+                            Partiel
+                        </span>
+                    {% elif f.statut == 'en_attente' %}
+                        <span class="badge" 
+                              style="background:#FEE2E2;color:#DC2626;font-size:12px;">
+                            En attente
+                        </span>
+                    {% else %}
+                        <span class="badge" 
+                              style="background:#F1F5F9;color:#64748b;font-size:12px;">
+                            Annulée
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                data-bs-toggle="dropdown">···</button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" 
+                                   href="{% url 'facturation:detail' f.pk %}">
+                                    <i class="bi bi-eye"></i> Voir détails
+                                </a>
+                            </li>
+                            {% if f.statut == 'en_attente' or f.statut == 'partiel' %}
+                            <li>
+                                <a class="dropdown-item text-success" 
+                                   href="{% url 'facturation:payer' f.pk %}">
+                                    <i class="bi bi-cash-coin"></i> Marquer comme payé
+                                </a>
+                            </li>
+                            {% endif %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post"
+                                    action="{% url 'facturation:supprimer' f.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="dropdown-item text-danger"
+                                            onclick="return confirm('Supprimer cette facture ?')">
+                                        <i class="bi bi-trash"></i> Supprimer
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="10" class="text-center text-muted py-5">
+                    <i class="bi bi-receipt" style="font-size:32px;"></i>
+                    <div class="mt-2">Aucune facture trouvée</div>
+                    <a href="{% url 'facturation:ajouter' %}" 
+                       class="btn-primary-sanar d-inline-flex mt-3">
+                        <i class="bi bi-plus-lg"></i> Nouvelle facture
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ctx = document.getElementById('paiementsChart').getContext('2d');
+new Chart(ctx, {
+    type: 'bar',
+    data: {
+        labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+        datasets: [
+            {
+                label: 'Encaissé patient',
+                data: [44000, 55000, 41000, 67000, 22000, 43000, 35000],
+                backgroundColor: '#16A34A',
+                borderRadius: 4,
+            },
+            {
+                label: 'Part assurance',
+                data: [13000, 23000, 8000, 9000, 13000, 27000, 33000],
+                backgroundColor: '#06B6D4',
+                borderRadius: 4,
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { stacked: false, grid: { display: false } },
+            y: { 
+                stacked: false, 
+                grid: { color: '#f1f5f9' },
+                ticks: {
+                    callback: v => v.toLocaleString() + ' F'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

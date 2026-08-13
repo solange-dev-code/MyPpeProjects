@@ -1,0 +1,112 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter un utilisateur{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Ajouter un utilisateur</div>
+        <div class="page-subtitle">Créer un nouveau compte utilisateur</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Prénom</label>
+                        <input type="text" name="first_name" class="form-control"
+                               placeholder="John">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nom</label>
+                        <input type="text" name="last_name" class="form-control"
+                               placeholder="Doe">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Nom d'utilisateur *
+                        </label>
+                        <input type="text" name="username" class="form-control"
+                               placeholder="johndoe" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" name="email" class="form-control"
+                               placeholder="john@sanar.com">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Mot de passe *</label>
+                        <input type="password" name="password" class="form-control"
+                               required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Rôle</label>
+                        <div class="d-flex gap-3 mt-1">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       name="is_staff" id="is_staff">
+                                <label class="form-check-label" for="is_staff"
+                                       style="font-size:14px;">
+                                    Staff (accès admin)
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox"
+                                       name="is_superuser" id="is_superuser">
+                                <label class="form-check-label" for="is_superuser"
+                                       style="font-size:14px;">
+                                    Super Admin
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button type="submit" class="btn-primary-sanar">
+                            <i class="bi bi-person-plus"></i> Créer l'utilisateur
+                        </button>
+                        <a href="{% url 'users_app:liste' %}"
+                           class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-info-circle text-primary"></i> Rôles disponibles
+            </h6>
+            <div class="mb-3">
+                <span class="badge" 
+                      style="background:#DBEAFE;color:#2563EB;font-size:12px;">
+                    Super Admin
+                </span>
+                <p style="font-size:13px;color:#64748b;margin-top:4px;">
+                    Accès complet à toutes les fonctionnalités
+                </p>
+            </div>
+            <div class="mb-3">
+                <span class="badge" 
+                      style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                    Staff
+                </span>
+                <p style="font-size:13px;color:#64748b;margin-top:4px;">
+                    Accès à l'interface d'administration
+                </p>
+            </div>
+            <div>
+                <span class="badge" 
+                      style="background:#F1F5F9;color:#64748b;font-size:12px;">
+                    Utilisateur
+                </span>
+                <p style="font-size:13px;color:#64748b;margin-top:4px;">
+                    Accès limité — correspond aux patients sur Flutter
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

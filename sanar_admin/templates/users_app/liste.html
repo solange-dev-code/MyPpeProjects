@@ -1,0 +1,362 @@
+{% extends 'base.html' %}
+{% block title %}Users{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Gestion des Utilisateurs</div>
+        <div class="page-subtitle">
+            Gérer les utilisateurs, rôles et permissions
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-upload"></i> Importer
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download"></i> Exporter
+        </button>
+        <a href="{% url 'users_app:ajouter' %}" class="btn-primary-sanar">
+            <i class="bi bi-person-plus"></i> Ajouter un utilisateur
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Utilisateurs</div>
+                    <div class="stat-value">{{ total }}</div>
+                    <div class="stat-change">↑ +12% ce mois</div>
+                </div>
+                <i class="bi bi-people stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Utilisateurs Actifs</div>
+                    <div class="stat-value">{{ actifs }}</div>
+                    <div class="stat-change">↑ +8% cette semaine</div>
+                </div>
+                <i class="bi bi-person-check stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card orange">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Nouveaux ce mois</div>
+                    <div class="stat-value">{{ ce_mois }}</div>
+                    <div class="stat-change">↑ +15% croissance</div>
+                </div>
+                <i class="bi bi-person-plus stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card red">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Taux d'activité</div>
+                    <div class="stat-value">75%</div>
+                    <div class="stat-change" style="color:#64748b;">
+                        <i class="bi bi-clock"></i> Dernières 24h
+                    </div>
+                </div>
+                <i class="bi bi-graph-up stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Graphiques -->
+<div class="row g-3 mb-4">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0" style="color:#1e293b;">
+                    Tendances d'inscription
+                </h6>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-primary">7J</button>
+                    <button class="btn btn-sm btn-outline-secondary">30J</button>
+                    <button class="btn btn-sm btn-outline-secondary">90J</button>
+                </div>
+            </div>
+            <canvas id="inscriptionsChart" height="120"></canvas>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">
+                Distribution des utilisateurs
+            </h6>
+            <p style="font-size:12px;color:#94a3b8;">Par rôle</p>
+            <div style="position:relative;height:160px;
+                        display:flex;justify-content:center;">
+                <canvas id="rolesChart"></canvas>
+            </div>
+            <div class="mt-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="width:10px;height:10px;background:#2563EB;
+                                     border-radius:50%;display:inline-block;"></span>
+                        <span style="font-size:13px;">Super Admin</span>
+                    </div>
+                    <span style="font-size:13px;font-weight:600;">{{ admins }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="width:10px;height:10px;background:#16A34A;
+                                     border-radius:50%;display:inline-block;"></span>
+                        <span style="font-size:13px;">Staff</span>
+                    </div>
+                    <span style="font-size:13px;font-weight:600;">{{ staff }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                        <span style="width:10px;height:10px;background:#D97706;
+                                     border-radius:50%;display:inline-block;"></span>
+                        <span style="font-size:13px;">Utilisateur</span>
+                    </div>
+                    <span style="font-size:13px;font-weight:600;">{{ simples }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tableau utilisateurs -->
+<div class="chart-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:#1e293b;">
+            Liste des utilisateurs
+        </h6>
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="q" value="{{ recherche }}"
+                   class="form-control form-control-sm"
+                   placeholder="Rechercher un utilisateur..."
+                   style="width:220px;">
+            <select name="role" class="form-select form-select-sm"
+                    style="width:140px;" onchange="this.form.submit()">
+                <option value="">Tous les rôles</option>
+                <option value="admin" 
+                    {% if role_filtre == 'admin' %}selected{% endif %}>
+                    Super Admin
+                </option>
+                <option value="staff" 
+                    {% if role_filtre == 'staff' %}selected{% endif %}>
+                    Staff
+                </option>
+                <option value="user" 
+                    {% if role_filtre == 'user' %}selected{% endif %}>
+                    Utilisateur
+                </option>
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-search"></i>
+            </button>
+        </form>
+    </div>
+
+    <table class="table table-hover">
+        <thead style="background:#f8fafc;">
+            <tr>
+                <th><input type="checkbox"></th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    UTILISATEUR
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    EMAIL
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    RÔLE
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    STATUT
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    DATE INSCRIPTION
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    DERNIÈRE CONNEXION
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    ACTIONS
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td><input type="checkbox"></td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:36px;height:36px;background:#eff6ff;
+                                    border-radius:50%;display:flex;
+                                    align-items:center;justify-content:center;
+                                    color:#2563EB;font-weight:700;font-size:14px;">
+                            {{ user.username|first|upper }}
+                        </div>
+                        <div>
+                            <div style="font-size:14px;font-weight:600;
+                                         color:#1e293b;">
+                                {{ user.get_full_name|default:user.username }}
+                            </div>
+                            <div style="font-size:12px;color:#94a3b8;">
+                                @{{ user.username }}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {{ user.email|default:"—" }}
+                </td>
+                <td>
+                    {% if user.is_superuser %}
+                    <span class="badge" 
+                          style="background:#DBEAFE;color:#2563EB;font-size:12px;">
+                        <i class="bi bi-shield-fill"></i> Super Admin
+                    </span>
+                    {% elif user.is_staff %}
+                    <span class="badge" 
+                          style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                        <i class="bi bi-person-badge"></i> Staff
+                    </span>
+                    {% else %}
+                    <span class="badge" 
+                          style="background:#F1F5F9;color:#64748b;font-size:12px;">
+                        <i class="bi bi-person"></i> Utilisateur
+                    </span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.is_active %}
+                    <span class="badge" 
+                          style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                        <i class="bi bi-circle-fill" 
+                           style="font-size:8px;"></i> Actif
+                    </span>
+                    {% else %}
+                    <span class="badge" 
+                          style="background:#FEE2E2;color:#DC2626;font-size:12px;">
+                        <i class="bi bi-circle-fill" 
+                           style="font-size:8px;"></i> Inactif
+                    </span>
+                    {% endif %}
+                </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {{ user.date_joined|date:"d/m/Y" }}
+                </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {% if user.last_login %}
+                        {{ user.last_login|timesince }} ago
+                    {% else %}
+                        Jamais
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                data-bs-toggle="dropdown">Actions</button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'users_app:modifier' user.pk %}">
+                                    <i class="bi bi-pencil"></i> Modifier
+                                </a>
+                            </li>
+                            {% if user != request.user %}
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post"
+                                      action="{% url 'users_app:supprimer' user.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit" 
+                                            class="dropdown-item text-danger"
+                                            onclick="return confirm('Supprimer cet utilisateur ?')">
+                                        <i class="bi bi-trash"></i> Supprimer
+                                    </button>
+                                </form>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center text-muted py-5">
+                    <i class="bi bi-people" style="font-size:32px;"></i>
+                    <div class="mt-2">Aucun utilisateur trouvé</div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div style="font-size:13px;color:#64748b;">
+            {{ users.count }} utilisateur(s)
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Graphique inscriptions
+const ctx1 = document.getElementById('inscriptionsChart').getContext('2d');
+new Chart(ctx1, {
+    type: 'bar',
+    data: {
+        labels: {{ labels_json|safe }},
+        datasets: [{
+            label: 'Inscriptions',
+            data: {{ data_json|safe }},
+            backgroundColor: 'rgba(99, 102, 241, 0.7)',
+            borderRadius: 6,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: { 
+                beginAtZero: true, 
+                grid: { color: '#f1f5f9' },
+                ticks: { stepSize: 1 }
+            },
+            x: { grid: { display: false } }
+        }
+    }
+});
+
+// Graphique rôles
+const ctx2 = document.getElementById('rolesChart').getContext('2d');
+new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+        labels: ['Super Admin', 'Staff', 'Utilisateur'],
+        datasets: [{
+            data: [{{ admins }}, {{ staff }}, {{ simples }}],
+            backgroundColor: ['#2563EB', '#16A34A', '#D97706'],
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        cutout: '65%',
+    }
+});
+</script>
+{% endblock %}

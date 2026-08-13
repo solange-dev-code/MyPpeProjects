@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}Nouvelle consultation{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Nouvelle consultation</div>
+        <div class="page-subtitle">Créer une nouvelle consultation médicale</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="chart-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+
+                    <!-- Recherche patient -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Patient * 
+                            <small class="text-muted fw-normal">
+                                (tapez pour rechercher)
+                            </small>
+                        </label>
+                        <div style="position:relative;">
+                            <input type="text" id="searchPatient"
+                                   class="form-control"
+                                   placeholder="Ex: Kouadio, Michel..."
+                                   autocomplete="off"
+                                   onkeyup="filtrerPatients()"
+                                   onfocus="showDropdown()"
+                                   onblur="hideDropdown()">
+                            <div id="dropdownPatient"
+                                 style="display:none;position:absolute;top:100%;
+                                        left:0;right:0;background:white;
+                                        border:1px solid #e2e8f0;border-radius:8px;
+                                        max-height:200px;overflow-y:auto;
+                                        z-index:1000;box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                                {% for p in patients %}
+                                <div class="patient-option"
+                                     data-id="{{ p.pk }}"
+                                     data-nom="{{ p.prenom }} {{ p.nom }}"
+                                     onclick="selectPatient({{ p.pk }}, '{{ p.prenom }} {{ p.nom }}')"
+                                     style="padding:10px 14px;cursor:pointer;
+                                            font-size:14px;border-bottom:1px solid #f1f5f9;">
+                                    <div style="font-weight:600;color:#1e293b;">
+                                        {{ p.prenom }} {{ p.nom }}
+                                    </div>
+                                    <div style="font-size:12px;color:#94a3b8;">
+                                        {{ p.patient_id }} — {{ p.telephone }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <input type="hidden" name="patient" id="patientId" required>
+                        <div id="patientSelected"
+                             style="display:none;margin-top:6px;padding:8px 12px;
+                                    background:#eff6ff;border-radius:8px;
+                                    font-size:13px;color:#2563EB;">
+                            <i class="bi bi-check-circle"></i>
+                            <span id="patientSelectedNom"></span>
+                        </div>
+                    </div>
+
+                    <!-- Médecin -->
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Médecin *</label>
+                        <select name="medecin" class="form-select" required>
+                            <option value="">Choisir un médecin</option>
+                            {% for m in medecins %}
+                            <option value="{{ m.pk }}">
+                                Dr. {{ m.nom }} — {{ m.get_specialite_display }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Date *</label>
+                        <input type="date" name="date" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Heure *</label>
+                        <input type="time" name="heure" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Motif *</label>
+                        <input type="text" name="motif" class="form-control"
+                               placeholder="Ex: Contrôle de routine" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">
+                            Type de consultation
+                        </label>
+                        <select name="type_consultation" class="form-select">
+                            <option value="Première visite">Première visite</option>
+                            <option value="Suivi">Suivi</option>
+                            <option value="Téléconsultation">Téléconsultation</option>
+                            <option value="Urgence">Urgence</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Coût (FCFA)</label>
+                        <input type="number" name="cout" class="form-control"
+                               placeholder="25000" min="0">
+                    </div>
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button type="submit" class="btn-primary-sanar">
+                            <i class="bi bi-plus-lg"></i> Créer la consultation
+                        </button>
+                        <a href="{% url 'consultations:liste' %}"
+                           class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-info-circle text-primary"></i> Info
+            </h6>
+            <p style="font-size:13px;color:#64748b;">
+                La consultation sera visible sur l'application mobile Flutter 
+                du patient dès sa création.
+            </p>
+            <hr>
+            <p style="font-size:13px;color:#64748b;">
+                <i class="bi bi-shield-check text-success"></i>
+                Un ID unique sera généré automatiquement (ex: CONS-2026-001).
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let dropdownVisible = false;
+
+function showDropdown() {
+    document.getElementById('dropdownPatient').style.display = 'block';
+    dropdownVisible = true;
+}
+
+function hideDropdown() {
+    setTimeout(() => {
+        document.getElementById('dropdownPatient').style.display = 'none';
+        dropdownVisible = false;
+    }, 200);
+}
+
+function filtrerPatients() {
+    const recherche = document.getElementById('searchPatient')
+                               .value.toLowerCase();
+    const options = document.getElementsByClassName('patient-option');
+    document.getElementById('dropdownPatient').style.display = 'block';
+    for (let i = 0; i < options.length; i++) {
+        const texte = options[i].getAttribute('data-nom').toLowerCase();
+        options[i].style.display = texte.includes(recherche) ? '' : 'none';
+    }
+    // Reset sélection si on retape
+    document.getElementById('patientId').value = '';
+    document.getElementById('patientSelected').style.display = 'none';
+}
+
+function selectPatient(id, nom) {
+    document.getElementById('patientId').value = id;
+    document.getElementById('searchPatient').value = nom;
+    document.getElementById('patientSelectedNom').textContent = nom;
+    document.getElementById('patientSelected').style.display = 'block';
+    document.getElementById('dropdownPatient').style.display = 'none';
+}
+</script>
+{% endblock %}

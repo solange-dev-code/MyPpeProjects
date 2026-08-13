@@ -1,0 +1,170 @@
+{% extends 'base.html' %}
+{% block title %}Médecins{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Liste des Médecins</div>
+        <div class="page-subtitle">Gérer les médecins de la plateforme Sanar</div>
+    </div>
+    <a href="{% url 'medecins:ajouter' %}" class="btn-primary-sanar">
+        <i class="bi bi-plus-lg"></i> Ajouter un médecin
+    </a>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Médecins</div>
+                    <div class="stat-value">{{ total }}</div>
+                </div>
+                <i class="bi bi-person-badge stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Médecins Actifs</div>
+                    <div class="stat-value">{{ actifs }}</div>
+                </div>
+                <i class="bi bi-person-check stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtres + Liste -->
+<div class="chart-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:#1e293b;">Liste des médecins</h6>
+        <form method="get" class="d-flex gap-2">
+            <input type="text" name="q" value="{{ recherche }}"
+                   class="form-control form-control-sm"
+                   placeholder="Rechercher..." style="width:200px;">
+            <select name="specialite" class="form-select form-select-sm"
+                    style="width:160px;" onchange="this.form.submit()">
+                <option value="">Toutes spécialités</option>
+                {% for val, label in specialites %}
+                <option value="{{ val }}"
+                    {% if specialite_filtre == val %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-sm btn-primary">
+                <i class="bi bi-search"></i>
+            </button>
+        </form>
+    </div>
+
+    <table class="table table-hover">
+        <thead style="background:#f8fafc;">
+            <tr>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">MÉDECIN</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">SPÉCIALITÉ</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">CONTACT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">CABINET</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">STATUT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for m in medecins %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:38px;height:38px;background:#eff6ff;
+                                    border-radius:50%;display:flex;align-items:center;
+                                    justify-content:center;color:#2563EB;
+                                    font-weight:700;font-size:13px;">
+                            {{ m.prenom|first }}{{ m.nom|first }}
+                        </div>
+                        <div>
+                            <div style="font-size:14px;font-weight:600;color:#1e293b;">
+                                Dr. {{ m.prenom }} {{ m.nom }}
+                            </div>
+                            <div style="font-size:12px;color:#94a3b8;">
+                                {{ m.email|default:"—" }}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="badge"
+                          style="background:#eff6ff;color:#2563EB;font-size:12px;">
+                        {{ m.get_specialite_display }}
+                    </span>
+                </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {{ m.telephone }}
+                </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {{ m.cabinet|default:"—" }}
+                </td>
+                <td>
+                    {% if m.est_actif %}
+                    <span class="badge"
+                          style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                        Actif
+                    </span>
+                    {% else %}
+                    <span class="badge"
+                          style="background:#FEE2E2;color:#DC2626;font-size:12px;">
+                        Inactif
+                    </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                data-bs-toggle="dropdown">Actions</button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'medecins:detail' m.pk %}">
+                                    <i class="bi bi-eye"></i> Voir profil
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item"
+                                   href="{% url 'medecins:modifier' m.pk %}">
+                                    <i class="bi bi-pencil"></i> Modifier
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <form method="post"
+                                      action="{% url 'medecins:supprimer' m.pk %}">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                            class="dropdown-item text-danger"
+                                            onclick="return confirm('Supprimer ce médecin ?')">
+                                        <i class="bi bi-trash"></i> Supprimer
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center text-muted py-5">
+                    <i class="bi bi-person-badge" style="font-size:32px;"></i>
+                    <div class="mt-2">Aucun médecin trouvé</div>
+                    <a href="{% url 'medecins:ajouter' %}"
+                       class="btn-primary-sanar d-inline-flex mt-3">
+                        <i class="bi bi-plus-lg"></i> Ajouter un médecin
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

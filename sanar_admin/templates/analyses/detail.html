@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+{% block title %}Détail analyse{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Détail de l'analyse</div>
+        <div class="page-subtitle">
+            {{ analyse.get_type_analyse_display }} — 
+            {{ analyse.patient.prenom }} {{ analyse.patient.nom }}
+        </div>
+    </div>
+    <a href="{% url 'analyses:liste' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">Informations de l'analyse</h6>
+            <table class="table">
+                <tr>
+                    <td class="text-muted" style="width:40%;">Patient</td>
+                    <td class="fw-semibold">
+                        {{ analyse.patient.prenom }} {{ analyse.patient.nom }}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Type d'analyse</td>
+                    <td class="fw-semibold">
+                        {{ analyse.get_type_analyse_display }}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Laboratoire</td>
+                    <td class="fw-semibold">{{ analyse.laboratoire }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Date</td>
+                    <td class="fw-semibold">{{ analyse.date|date:"d/m/Y" }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Statut</td>
+                    <td>
+                        {% if analyse.statut == 'disponible' %}
+                        <span class="badge" 
+                              style="background:#DCFCE7;color:#16A34A;">
+                            Disponible
+                        </span>
+                        {% elif analyse.statut == 'en_attente' %}
+                        <span class="badge" 
+                              style="background:#FEF3C7;color:#D97706;">
+                            En attente
+                        </span>
+                        {% else %}
+                        <span class="badge" 
+                              style="background:#FEE2E2;color:#DC2626;">
+                            Critique
+                        </span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% if analyse.resultat %}
+                <tr>
+                    <td class="text-muted">Résultat</td>
+                    <td>{{ analyse.resultat }}</td>
+                </tr>
+                {% endif %}
+                {% if analyse.conclusion %}
+                <tr>
+                    <td class="text-muted">Conclusion</td>
+                    <td>{{ analyse.conclusion }}</td>
+                </tr>
+                {% endif %}
+            </table>
+
+            {% if analyse.fichier_pdf %}
+            <div class="mt-3">
+                <a href="{{ analyse.fichier_pdf.url }}"
+                   class="btn-primary-sanar d-inline-flex" target="_blank">
+                    <i class="bi bi-file-pdf"></i> Voir le fichier
+                </a>
+            </div>
+            {% endif %}
+
+            {% if analyse.statut == 'en_attente' %}
+            <div class="mt-3">
+                <a href="{% url 'analyses:valider' analyse.pk %}"
+                   class="btn btn-success btn-sm">
+                    <i class="bi bi-check-circle"></i> 
+                    Valider et rendre disponible
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">Patient</h6>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div style="width:50px;height:50px;background:#eff6ff;
+                            border-radius:50%;display:flex;align-items:center;
+                            justify-content:center;color:#2563EB;
+                            font-weight:700;font-size:18px;">
+                    {{ analyse.patient.prenom|first }}{{ analyse.patient.nom|first }}
+                </div>
+                <div>
+                    <div class="fw-bold">
+                        {{ analyse.patient.prenom }} {{ analyse.patient.nom }}
+                    </div>
+                    <div class="text-muted" style="font-size:13px;">
+                        {{ analyse.patient.patient_id }}
+                    </div>
+                </div>
+            </div>
+            <div style="font-size:13px;">
+                <div class="mb-2">
+                    <span class="text-muted">Groupe sanguin:</span>
+                    <strong class="ms-2">{{ analyse.patient.groupe_sanguin }}</strong>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted">Allergies:</span>
+                    <strong class="ms-2">
+                        {{ analyse.patient.allergies|default:"Aucune" }}
+                    </strong>
+                </div>
+                <div>
+                    <span class="text-muted">Téléphone:</span>
+                    <strong class="ms-2">{{ analyse.patient.telephone }}</strong>
+                </div>
+            </div>
+            <div class="mt-3">
+                <a href="{% url 'patients:dossier' analyse.patient.pk %}"
+                   class="btn btn-outline-primary btn-sm w-100">
+                    <i class="bi bi-folder2-open"></i> Voir dossier médical
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

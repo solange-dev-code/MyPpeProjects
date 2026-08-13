@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Modifier médecin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Modifier Dr. {{ medecin.prenom }} {{ medecin.nom }}</div>
+    </div>
+</div>
+
+<div class="col-md-7">
+    <div class="chart-card">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Prénom *</label>
+                    <input type="text" name="prenom" class="form-control"
+                           value="{{ medecin.prenom }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Nom *</label>
+                    <input type="text" name="nom" class="form-control"
+                           value="{{ medecin.nom }}" required>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Spécialité *</label>
+                    <select name="specialite" class="form-select" required>
+                        <option value="cardiologue"
+                            {% if medecin.specialite == 'cardiologue' %}selected{% endif %}>
+                            Cardiologue
+                        </option>
+                        <option value="generaliste"
+                            {% if medecin.specialite == 'generaliste' %}selected{% endif %}>
+                            Généraliste
+                        </option>
+                        <option value="dermatologue"
+                            {% if medecin.specialite == 'dermatologue' %}selected{% endif %}>
+                            Dermatologue
+                        </option>
+                        <option value="gynecologue"
+                            {% if medecin.specialite == 'gynecologue' %}selected{% endif %}>
+                            Gynécologue
+                        </option>
+                        <option value="neurologue"
+                            {% if medecin.specialite == 'neurologue' %}selected{% endif %}>
+                            Neurologue
+                        </option>
+                        <option value="ophtalmologue"
+                            {% if medecin.specialite == 'ophtalmologue' %}selected{% endif %}>
+                            Ophtalmologue
+                        </option>
+                        <option value="pediatre"
+                            {% if medecin.specialite == 'pediatre' %}selected{% endif %}>
+                            Pédiatre
+                        </option>
+                        <option value="radiologue"
+                            {% if medecin.specialite == 'radiologue' %}selected{% endif %}>
+                            Radiologue
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Téléphone</label>
+                    <input type="text" name="telephone" class="form-control"
+                           value="{{ medecin.telephone }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Email</label>
+                    <input type="email" name="email" class="form-control"
+                           value="{{ medecin.email }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Cabinet</label>
+                    <input type="text" name="cabinet" class="form-control"
+                           value="{{ medecin.cabinet }}">
+                </div>
+                <div class="col-12">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                               name="est_actif" id="est_actif"
+                               {% if medecin.est_actif %}checked{% endif %}>
+                        <label class="form-check-label" for="est_actif">
+                            Médecin actif
+                        </label>
+                    </div>
+                </div>
+                <div class="col-12 d-flex gap-2 mt-2">
+                    <button type="submit" class="btn-primary-sanar">
+                        <i class="bi bi-check-lg"></i> Enregistrer
+                    </button>
+                    <a href="{% url 'medecins:liste' %}"
+                       class="btn btn-outline-secondary">Annuler</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

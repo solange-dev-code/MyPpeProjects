@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+{% block title %}Calendrier{% endblock %}
+
+{% block extra_css %}
+<link href='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css' 
+      rel='stylesheet' />
+<style>
+.fc-toolbar-title { font-size: 18px !important; font-weight: 700 !important; }
+.fc-button-primary {
+    background: #2563EB !important;
+    border-color: #2563EB !important;
+    font-size: 13px !important;
+}
+.fc-button-primary:not(.fc-button-active):hover {
+    background: #1D4ED8 !important;
+}
+.fc-button-active {
+    background: #1D4ED8 !important;
+}
+.fc-daygrid-event { border-radius: 6px !important; font-size: 12px !important; }
+.fc-col-header-cell { 
+    background: #f8fafc; 
+    font-size: 13px;
+    font-weight: 600;
+    color: #64748b;
+}
+.calendar-sidebar {
+    width: 280px;
+    flex-shrink: 0;
+}
+.mini-cal { background: white; border-radius: 12px; padding: 16px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Calendrier</div>
+        <div class="page-subtitle">
+            Gestion des rendez-vous et événements médicaux
+        </div>
+    </div>
+    <a href="{% url 'calendrier:ajouter' %}" class="btn-primary-sanar">
+        <i class="bi bi-plus-lg"></i> Nouvel événement
+    </a>
+</div>
+
+<div class="d-flex gap-3">
+    <!-- Sidebar -->
+    <div class="calendar-sidebar">
+        <!-- Stats -->
+        <div class="chart-card mb-3">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">Event Categories</h6>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width:10px;height:10px;background:#2563EB;
+                                 border-radius:50%;display:inline-block;"></span>
+                    <span style="font-size:13px;">Events</span>
+                </div>
+                <span class="badge bg-primary">{{ total_events }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width:10px;height:10px;background:#16A34A;
+                                 border-radius:50%;display:inline-block;"></span>
+                    <span style="font-size:13px;">Rendez-Vous</span>
+                </div>
+                <span class="badge" 
+                      style="background:#16A34A;">{{ total_rdvs }}</span>
+            </div>
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width:10px;height:10px;background:#9333EA;
+                                 border-radius:50%;display:inline-block;"></span>
+                    <span style="font-size:13px;">Consultations</span>
+                </div>
+                <span class="badge" style="background:#9333EA;">0</span>
+            </div>
+        </div>
+
+        <!-- Légende couleurs -->
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">Légende</h6>
+            <div class="d-flex flex-column gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width:14px;height:14px;background:#16A34A;
+                                 border-radius:3px;display:inline-block;"></span>
+                    <span style="font-size:13px;">RDV Confirmé</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width:14px;height:14px;background:#D97706;
+                                 border-radius:3px;display:inline-block;"></span>
+                    <span style="font-size:13px;">RDV En attente</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width:14px;height:14px;background:#2563EB;
+                                 border-radius:3px;display:inline-block;"></span>
+                    <span style="font-size:13px;">Événement</span>
+                </div>
+                <div class="d-flex align-items-center gap-2">
+                    <span style="width:14px;height:14px;background:#DC2626;
+                                 border-radius:3px;display:inline-block;"></span>
+                    <span style="font-size:13px;">Urgent</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Calendrier principal -->
+    <div class="flex-grow-1 chart-card">
+        <div id='calendar'></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js'>
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const calendarEl = document.getElementById('calendar');
+    const evenements = {{ evenements_json|safe }};
+
+    const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'fr',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay'
+        },
+        buttonText: {
+            today: 'Aujourd\'hui',
+            month: 'Month',
+            week: 'Week',
+            day: 'Day',
+        },
+        events: evenements,
+        eventClick: function(info) {
+            alert('Événement: ' + info.event.title);
+        },
+        dateClick: function(info) {
+            window.location.href = "{% url 'calendrier:ajouter' %}?date=" + info.dateStr;
+        },
+        eventDidMount: function(info) {
+            info.el.title = info.event.title;
+        }
+    });
+    calendar.render();
+});
+</script>
+{% endblock %}

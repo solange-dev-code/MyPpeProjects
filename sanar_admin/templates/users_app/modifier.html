@@ -1,0 +1,69 @@
+{% extends 'base.html' %}
+{% block title %}Modifier l'utilisateur{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Modifier l'utilisateur</div>
+        <div class="page-subtitle">@{{ user.username }}</div>
+    </div>
+</div>
+
+<div class="col-md-7">
+    <div class="chart-card">
+        <form method="post">
+            {% csrf_token %}
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Prénom</label>
+                    <input type="text" name="first_name" class="form-control"
+                           value="{{ user.first_name }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Nom</label>
+                    <input type="text" name="last_name" class="form-control"
+                           value="{{ user.last_name }}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Email</label>
+                    <input type="email" name="email" class="form-control"
+                           value="{{ user.email }}">
+                </div>
+                <div class="col-12">
+                    <label class="form-label fw-semibold">Permissions</label>
+                    <div class="d-flex gap-3 mt-1">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   name="is_active" id="is_active"
+                                   {% if user.is_active %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active"
+                                   style="font-size:14px;">Actif</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   name="is_staff" id="is_staff"
+                                   {% if user.is_staff %}checked{% endif %}>
+                            <label class="form-check-label" for="is_staff"
+                                   style="font-size:14px;">Staff</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   name="is_superuser" id="is_superuser"
+                                   {% if user.is_superuser %}checked{% endif %}>
+                            <label class="form-check-label" for="is_superuser"
+                                   style="font-size:14px;">Super Admin</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 d-flex gap-2 mt-2">
+                    <button type="submit" class="btn-primary-sanar">
+                        <i class="bi bi-check-lg"></i> Enregistrer
+                    </button>
+                    <a href="{% url 'users_app:liste' %}"
+                       class="btn btn-outline-secondary">Annuler</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

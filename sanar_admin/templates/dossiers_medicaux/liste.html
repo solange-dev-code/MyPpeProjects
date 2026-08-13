@@ -1,0 +1,307 @@
+{% extends 'base.html' %}
+{% block title %}Dossiers Médicaux{% endblock %}
+
+{% block extra_css %}
+<style>
+.dossier-card {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    transition: transform 0.15s, box-shadow 0.15s;
+    cursor: pointer;
+    text-decoration: none;
+    display: block;
+    color: inherit;
+}
+.dossier-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    color: inherit;
+}
+.folder-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin: 0 auto 10px;
+}
+.sidebar-section {
+    background: white;
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    margin-bottom: 16px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Dossiers Médicaux</div>
+        <div class="page-subtitle">
+            Consultez, partagez et gérez les dossiers de vos patients
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'dossiers_medicaux:nouveau' %}" class="btn-primary-sanar">
+            <i class="bi bi-folder-plus"></i> Nouveau Dossier Patient
+        </a>
+        <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-printer"></i> Imprimer
+        </button>
+    </div>
+</div>
+
+<div class="d-flex gap-3">
+    <!-- Sidebar gauche -->
+    <div style="width:260px;flex-shrink:0;">
+
+        <!-- Mes dossiers -->
+        <div class="sidebar-section">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">Mes Dossiers</h6>
+            <div style="background:linear-gradient(135deg,#2563EB,#7C3AED);
+                        border-radius:10px;padding:16px;color:white;">
+                <div style="font-size:13px;opacity:0.8;">Dossiers Actifs</div>
+                <div style="font-size:24px;font-weight:700;margin:4px 0;">
+                    {{ actifs }} / {{ total }} patients
+                </div>
+                <div style="background:rgba(255,255,255,0.3);
+                            border-radius:4px;height:6px;margin:8px 0;">
+                    <div style="background:white;border-radius:4px;height:100%;
+                                width:{% if total %}{{ actifs|floatformat:0 }}{% else %}0{% endif %}%;">
+                    </div>
+                </div>
+                <div style="font-size:12px;opacity:0.8;">
+                    {{ total|add:"-"|add:actifs }} places disponibles
+                    {% if urgents %}
+                    <span style="background:#DC2626;border-radius:4px;
+                                 padding:2px 6px;margin-left:4px;">
+                        {{ urgents }} urgent(s)
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Accès rapide -->
+        <div class="sidebar-section">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">Accès Rapide</h6>
+            <div class="d-flex flex-column gap-1">
+                <a href="?" 
+                   class="d-flex justify-content-between align-items-center
+                          p-2 rounded text-decoration-none"
+                   style="color:#1e293b;font-size:13px;"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='transparent'">
+                    <span><i class="bi bi-folder2 me-2 text-primary"></i>
+                        Tous les dossiers</span>
+                    <span class="badge bg-secondary">{{ total }}</span>
+                </a>
+                <a href="?statut=valide" 
+                   class="d-flex justify-content-between align-items-center
+                          p-2 rounded text-decoration-none"
+                   style="color:#1e293b;font-size:13px;"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='transparent'">
+                    <span><i class="bi bi-file-medical me-2 text-success"></i>
+                        Ordonnances</span>
+                    <span class="badge" style="background:#16A34A;">
+                        {{ actifs }}
+                    </span>
+                </a>
+                <a href="?statut=en_attente" 
+                   class="d-flex justify-content-between align-items-center
+                          p-2 rounded text-decoration-none"
+                   style="color:#1e293b;font-size:13px;"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='transparent'">
+                    <span><i class="bi bi-graph-up me-2 text-warning"></i>
+                        Résultats d'analyses</span>
+                    <span class="badge" style="background:#D97706;">
+                        {{ en_attente }}
+                    </span>
+                </a>
+                {% if urgents %}
+                <a href="?statut=urgent" 
+                   class="d-flex justify-content-between align-items-center
+                          p-2 rounded text-decoration-none"
+                   style="color:#1e293b;font-size:13px;"
+                   onmouseover="this.style.background='#f8fafc'"
+                   onmouseout="this.style.background='transparent'">
+                    <span><i class="bi bi-exclamation-circle me-2 text-danger"></i>
+                        À traiter (Urgent)</span>
+                    <span class="badge bg-danger">{{ urgents }}</span>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Par Service -->
+        <div class="sidebar-section">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">Par Service</h6>
+            {% for service, count in services.items %}
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <div class="d-flex align-items-center gap-2">
+                    <i class="bi bi-folder2" style="color:#2563EB;"></i>
+                    <span style="font-size:13px;color:#1e293b;">{{ service }}</span>
+                </div>
+                <span style="font-size:12px;color:#94a3b8;">
+                    {{ count }} patient(s)
+                </span>
+            </div>
+            {% empty %}
+            <div style="font-size:13px;color:#94a3b8;">Aucun service</div>
+            {% endfor %}
+        </div>
+
+        <!-- Derniers consultés -->
+        <div class="sidebar-section">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">Derniers Consultés</h6>
+            {% for d in derniers_consultes %}
+            <a href="{% url 'dossiers_medicaux:detail' d.pk %}"
+               class="d-flex align-items-center gap-2 mb-2 text-decoration-none">
+                <div style="width:32px;height:32px;border-radius:8px;
+                            background:#DC2626;display:flex;align-items:center;
+                            justify-content:center;color:white;font-size:14px;">
+                    <i class="bi bi-folder2"></i>
+                </div>
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                        {{ d.patient.prenom }} {{ d.patient.nom }}
+                    </div>
+                    {% if d.medecin_referent %}
+                    <div style="font-size:11px;color:#94a3b8;">
+                        {{ d.medecin_referent.get_specialite_display }}
+                    </div>
+                    {% endif %}
+                </div>
+            </a>
+            {% empty %}
+            <div style="font-size:13px;color:#94a3b8;">Aucun dossier consulté</div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="flex-grow-1">
+        <!-- Filtres -->
+        <div class="chart-card mb-3">
+            <div class="d-flex justify-content-between align-items-center">
+                <div style="font-size:14px;font-weight:600;color:#1e293b;">
+                    / Dossiers Patients
+                </div>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm" style="width:140px;"
+                            onchange="window.location.href='?tri='+this.value">
+                        <option value="nom">Trier par Nom</option>
+                        <option value="date">Trier par Date</option>
+                        <option value="statut">Trier par Statut</option>
+                    </select>
+                    <select class="form-select form-select-sm" style="width:140px;"
+                            onchange="window.location.href='?statut='+this.value">
+                        <option value="">Tous les statuts</option>
+                        <option value="valide" 
+                            {% if statut_filtre == 'valide' %}selected{% endif %}>
+                            Validé
+                        </option>
+                        <option value="en_attente" 
+                            {% if statut_filtre == 'en_attente' %}selected{% endif %}>
+                            En attente
+                        </option>
+                        <option value="urgent" 
+                            {% if statut_filtre == 'urgent' %}selected{% endif %}>
+                            Urgent
+                        </option>
+                    </select>
+                    <input type="text" class="form-control form-control-sm"
+                           placeholder="Rechercher un patient..."
+                           style="width:200px;"
+                           value="{{ recherche }}"
+                           onchange="window.location.href='?q='+this.value">
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-clockwise"></i>
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-three-dots"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grille de dossiers -->
+        <div class="row g-3">
+            {% for dossier in dossiers %}
+            <div class="col-md-4">
+                <a href="{% url 'dossiers_medicaux:detail' dossier.pk %}"
+                   class="dossier-card">
+                    <!-- Icône dossier colorée -->
+                    <div class="folder-icon"
+                         style="background:{% if dossier.statut == 'urgent' %}#FEE2E2
+                                {% elif dossier.statut == 'valide' %}#DCFCE7
+                                {% else %}#FEF3C7{% endif %};">
+                        <i class="bi bi-folder2-open"
+                           style="color:{% if dossier.statut == 'urgent' %}#DC2626
+                                  {% elif dossier.statut == 'valide' %}#16A34A
+                                  {% else %}#D97706{% endif %};"></i>
+                    </div>
+
+                    <!-- Nom patient -->
+                    <div class="text-center mb-1">
+                        <div style="font-size:14px;font-weight:600;color:#1e293b;">
+                            {{ dossier.patient.prenom }} {{ dossier.patient.nom }}
+                        </div>
+                        {% if dossier.medecin_referent %}
+                        <div style="font-size:12px;color:#94a3b8;">
+                            {{ dossier.medecin_referent.get_specialite_display }}
+                        </div>
+                        {% endif %}
+                        <div style="font-size:12px;color:#64748b;margin-top:2px;">
+                            {{ dossier.documents.count }} document(s)
+                        </div>
+                    </div>
+
+                    <!-- Statut + médecin -->
+                    <div class="d-flex justify-content-between align-items-center mt-2">
+                        {% if dossier.statut == 'valide' %}
+                        <span class="badge" 
+                              style="background:#DCFCE7;color:#16A34A;font-size:11px;">
+                            ✓ Validé
+                        </span>
+                        {% elif dossier.statut == 'urgent' %}
+                        <span class="badge" 
+                              style="background:#FEE2E2;color:#DC2626;font-size:11px;">
+                            ⚠ Urgent
+                        </span>
+                        {% else %}
+                        <span class="badge" 
+                              style="background:#FEF3C7;color:#D97706;font-size:11px;">
+                            ⏳ En attente
+                        </span>
+                        {% endif %}
+                        {% if dossier.medecin_referent %}
+                        <span style="font-size:11px;color:#94a3b8;">
+                            Dr. {{ dossier.medecin_referent.nom }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </a>
+            </div>
+            {% empty %}
+            <div class="col-12 text-center py-5 text-muted">
+                <i class="bi bi-folder2-open" style="font-size:48px;"></i>
+                <div class="mt-2">Aucun dossier médical trouvé</div>
+                <a href="{% url 'dossiers_medicaux:nouveau' %}"
+                   class="btn-primary-sanar d-inline-flex mt-3">
+                    <i class="bi bi-plus-lg"></i> Créer un dossier
+                </a>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

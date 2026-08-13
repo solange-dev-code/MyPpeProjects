@@ -1,0 +1,214 @@
+{% extends 'base.html' %}
+{% block title %}Patients{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Gestion des Patients</div>
+        <div class="page-subtitle">Gérer les dossiers patients et le suivi médical</div>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download"></i> Exporter
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-upload"></i> Importer
+        </button>
+        <a href="{% url 'patients:ajouter' %}" class="btn-primary-sanar">
+            <i class="bi bi-plus-lg"></i> Ajouter un Patient
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card blue">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Patients</div>
+                    <div class="stat-value">{{ total }}</div>
+                    <div class="stat-change">↑ +5% ce mois</div>
+                </div>
+                <i class="bi bi-people stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card green">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Stables</div>
+                    <div class="stat-value">{{ stables }}</div>
+                    <div class="stat-change">✓ État stable</div>
+                </div>
+                <i class="bi bi-heart-pulse stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card red">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Urgences</div>
+                    <div class="stat-value">{{ urgences }}</div>
+                    <div class="stat-change" style="color:#DC2626;">
+                        ⚠ Cas critiques
+                    </div>
+                </div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Table -->
+<div class="chart-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:#1e293b;">Dossiers Patients</h6>
+        <div class="d-flex gap-2">
+            <form method="get" class="d-flex gap-2">
+                <input type="text" name="q" value="{{ recherche }}"
+                       class="form-control form-control-sm"
+                       placeholder="Rechercher un patient..."
+                       style="width:220px;">
+                <select name="statut" class="form-select form-select-sm"
+                        style="width:150px;"
+                        onchange="this.form.submit()">
+                    <option value="">Tous les statuts</option>
+                    <option value="stable" 
+                        {% if statut == 'stable' %}selected{% endif %}>
+                        Stable
+                    </option>
+                    <option value="critique" 
+                        {% if statut == 'critique' %}selected{% endif %}>
+                        Critique
+                    </option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <table class="table table-hover">
+    <thead style="background:#f8fafc;">
+        <tr>
+            <th><input type="checkbox"></th>
+            <th style="font-size:12px;color:#2563EB;font-weight:700;">PATIENT</th>
+            <th style="font-size:12px;color:#2563EB;font-weight:700;">CONTACT</th>
+            <th style="font-size:12px;color:#2563EB;font-weight:700;">GROUPE SANGUIN</th>
+            <th style="font-size:12px;color:#2563EB;font-weight:700;">ALLERGIES</th>
+            <th style="font-size:12px;color:#2563EB;font-weight:700;">STATUT</th>
+            <th style="font-size:12px;color:#2563EB;font-weight:700;">DATE INSCRIPTION</th>
+            <th style="font-size:12px;color:#2563EB;font-weight:700;">ACTIONS</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for patient in patients %}
+        <tr>
+            <td><input type="checkbox"></td>
+            <td>
+                <div class="d-flex align-items-center gap-2">
+                    <div style="width:36px;height:36px;background:#eff6ff;
+                                border-radius:50%;display:flex;align-items:center;
+                                justify-content:center;color:#2563EB;
+                                font-weight:700;font-size:13px;">
+                        {{ patient.prenom|first }}{{ patient.nom|first }}
+                    </div>
+                    <div>
+                        <div style="font-size:14px;font-weight:600;color:#1e293b;">
+                            {{ patient.prenom }} {{ patient.nom }}
+                        </div>
+                        <div style="font-size:12px;color:#94a3b8;">
+                            {{ patient.patient_id }}
+                        </div>
+                    </div>
+                </div>
+            </td>
+            <td>
+                <div style="font-size:13px;color:#1e293b;">{{ patient.email }}</div>
+                <div style="font-size:12px;color:#94a3b8;">{{ patient.telephone }}</div>
+            </td>
+            <td>
+                <span class="badge"
+                      style="background:#eff6ff;color:#2563EB;font-size:12px;">
+                    {{ patient.groupe_sanguin }}
+                </span>
+            </td>
+            <td style="font-size:13px;color:#64748b;">
+                {{ patient.allergies|default:"Aucune"|truncatechars:20 }}
+            </td>
+            <td>
+                {% if patient.est_critique %}
+                <span class="badge"
+                      style="background:#FEE2E2;color:#DC2626;font-size:12px;">
+                    <i class="bi bi-exclamation-circle"></i> Critique
+                </span>
+                {% else %}
+                <span class="badge"
+                      style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                    <i class="bi bi-check-circle"></i> Stable
+                </span>
+                {% endif %}
+            </td>
+            <td style="font-size:13px;color:#64748b;">
+                {{ patient.date_inscription|date:"d/m/Y" }}
+            </td>
+            <td>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                            data-bs-toggle="dropdown">Actions</button>
+                    <ul class="dropdown-menu">
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'patients:dossier' patient.pk %}">
+                                <i class="bi bi-folder2-open text-primary"></i>
+                                Voir dossier patient
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item"
+                               href="{% url 'patients:modifier' patient.pk %}">
+                                <i class="bi bi-pencil text-warning"></i> Modifier
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <form method="post"
+                                  action="{% url 'patients:supprimer' patient.pk %}">
+                                {% csrf_token %}
+                                <button type="submit"
+                                        class="dropdown-item text-danger"
+                                        onclick="return confirm('Supprimer ?')">
+                                    <i class="bi bi-trash"></i> Supprimer
+                                </button>
+                            </form>
+                        </li>
+                    </ul>
+                </div>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="8" class="text-center text-muted py-5">
+                <i class="bi bi-people" style="font-size:32px;"></i>
+                <div class="mt-2">Aucun patient trouvé</div>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+    <!-- Pagination -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <div style="font-size:13px;color:#64748b;">
+            {{ patients.count }} patient(s) trouvé(s)
+        </div>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary">Précédent</button>
+            <button class="btn btn-sm btn-outline-secondary">Suivant</button>
+        </div>
+    </div>
+</div>
+{% endblock %}

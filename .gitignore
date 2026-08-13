@@ -1,0 +1,30 @@
+# Secrets Django
+sanar_admin/.env
+sanar_admin/.env.local
+sanar_admin/.env.neon
+
+# Base de données locale
+sanar_admin/db.sqlite3
+
+# Fichiers uploadés
+sanar_admin/media/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+sanar_admin/env/
+sanar_admin/venv/
+
+# Flutter
+sanar/build/
+sanar/.dart_tool/
+sanar/.flutter-plugins
+sanar/.flutter-plugins-dependencies
+
+# VS Code
+.vscode/
+
+# Windows
+Thumbs.db
+desktop.ini

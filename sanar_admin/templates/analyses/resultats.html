@@ -1,0 +1,232 @@
+{% extends 'base.html' %}
+{% block title %}Résultats d'analyse{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Déposer un résultat d'analyse</div>
+        <div class="page-subtitle">
+            Renseigner les résultats et déposer le fichier
+        </div>
+    </div>
+    <a href="{% url 'analyses:liste' %}"
+       class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Rechercher un patient *
+                    </label>
+                    <input type="text" id="searchPatient"
+                           class="form-control mb-2"
+                           placeholder="Tapez le nom du patient..."
+                           autocomplete="off"
+                           onkeyup="filtrerPatients()"
+                           onfocus="showDropdown()"
+                           onblur="hideDropdown()">
+                    <div style="position:relative;">
+                        <div id="dropdownPatient"
+                             style="display:none;position:absolute;top:0;
+                                    left:0;right:0;background:white;
+                                    border:1px solid #e2e8f0;border-radius:8px;
+                                    max-height:200px;overflow-y:auto;
+                                    z-index:1000;
+                                    box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                            {% for p in patients %}
+                            <div class="patient-option"
+                                 data-id="{{ p.pk }}"
+                                 data-nom="{{ p.prenom }} {{ p.nom }}"
+                                 onclick="selectPatient({{ p.pk }}, '{{ p.prenom }} {{ p.nom }}')"
+                                 style="padding:10px 14px;cursor:pointer;
+                                        font-size:14px;
+                                        border-bottom:1px solid #f1f5f9;">
+                                <div style="font-weight:600;color:#1e293b;">
+                                    {{ p.prenom }} {{ p.nom }}
+                                </div>
+                                <div style="font-size:12px;color:#94a3b8;">
+                                    {{ p.patient_id }} — {{ p.telephone }}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    <input type="hidden" name="patient" id="patientId">
+                    <div id="patientSelected"
+                         style="display:none;margin-top:6px;padding:8px 12px;
+                                background:#eff6ff;border-radius:8px;
+                                font-size:13px;color:#2563EB;">
+                        <i class="bi bi-check-circle"></i>
+                        <span id="patientSelectedNom"></span>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">
+                        Analyse concernée *
+                    </label>
+                    <select name="analyse" id="selectAnalyse"
+                            class="form-select" required>
+                        <option value="">-- Choisir une analyse --</option>
+                        {% for a in analyses %}
+                        <option value="{{ a.pk }}"
+                                data-patient="{{ a.patient.pk }}">
+                            {{ a.get_type_analyse_display }} —
+                            {{ a.patient.prenom }} {{ a.patient.nom }} —
+                            {{ a.date|date:"d/m/Y" }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Résultat *</label>
+                    <textarea name="resultat" class="form-control" rows="3"
+                              placeholder="Entrez les résultats détaillés..."
+                              required></textarea>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Conclusion</label>
+                    <textarea name="conclusion" class="form-control" rows="2"
+                              placeholder="Conclusion médicale..."></textarea>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">
+                        Déposer le fichier résultat
+                    </label>
+                    <div style="border:2px dashed #e2e8f0;border-radius:12px;
+                                padding:30px;text-align:center;background:#f8fafc;">
+                        <i class="bi bi-cloud-arrow-up"
+                           style="font-size:36px;color:#94a3b8;"></i>
+                        <div style="font-size:14px;color:#64748b;margin:8px 0;">
+                            PDF, DICOM, images médicales — Max 10 Mo
+                        </div>
+                        <input type="file" name="fichier_pdf"
+                               class="form-control mt-2"
+                               accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-primary-sanar">
+                        <i class="bi bi-check-circle"></i>
+                        Valider et rendre disponible
+                    </button>
+                    <a href="{% url 'analyses:liste' %}"
+                       class="btn btn-outline-secondary">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-5">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-info-circle text-primary"></i> Info
+            </h6>
+            <p style="font-size:13px;color:#64748b;">
+                Une fois validés, les résultats seront visibles sur
+                l'application mobile Flutter du patient dans la section
+                <strong>Résultats d'analyses</strong>.
+            </p>
+            <hr>
+            <p style="font-size:13px;color:#64748b;">
+                <i class="bi bi-folder2-open text-warning"></i>
+                Le fichier PDF sera aussi automatiquement ajouté au
+                <strong>dossier médical</strong> du patient.
+            </p>
+        </div>
+
+        <!-- Analyses en attente -->
+        <div class="chart-card mt-3">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-hourglass text-warning"></i>
+                Analyses en attente
+            </h6>
+            {% for a in analyses %}
+            <div class="d-flex align-items-center gap-2 mb-2"
+                 style="padding:8px;background:#f8fafc;border-radius:8px;">
+                <div style="width:32px;height:32px;background:#FEF3C7;
+                            border-radius:8px;display:flex;align-items:center;
+                            justify-content:center;color:#D97706;flex-shrink:0;">
+                    <i class="bi bi-clock" style="font-size:14px;"></i>
+                </div>
+                <div>
+                    <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                        {{ a.get_type_analyse_display }}
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;">
+                        {{ a.patient.prenom }} {{ a.patient.nom }} —
+                        {{ a.date|date:"d/m/Y" }}
+                    </div>
+                </div>
+            </div>
+            {% empty %}
+            <div class="text-center text-muted py-2" style="font-size:13px;">
+                Aucune analyse en attente
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function showDropdown() {
+    document.getElementById('dropdownPatient').style.display = 'block';
+}
+
+function hideDropdown() {
+    setTimeout(() => {
+        document.getElementById('dropdownPatient').style.display = 'none';
+    }, 200);
+}
+
+function filtrerPatients() {
+    const recherche = document.getElementById('searchPatient')
+                               .value.toLowerCase();
+    const options = document.getElementsByClassName('patient-option');
+    document.getElementById('dropdownPatient').style.display = 'block';
+    for (let i = 0; i < options.length; i++) {
+        const texte = options[i].getAttribute('data-nom').toLowerCase();
+        options[i].style.display = texte.includes(recherche) ? '' : 'none';
+    }
+    document.getElementById('patientId').value = '';
+    document.getElementById('patientSelected').style.display = 'none';
+    filtrerAnalyses('');
+}
+
+function selectPatient(id, nom) {
+    document.getElementById('patientId').value = id;
+    document.getElementById('searchPatient').value = nom;
+    document.getElementById('patientSelectedNom').textContent = nom;
+    document.getElementById('patientSelected').style.display = 'block';
+    document.getElementById('dropdownPatient').style.display = 'none';
+    filtrerAnalyses(id);
+}
+
+function filtrerAnalyses(patientId) {
+    const select = document.getElementById('selectAnalyse');
+    const options = select.getElementsByTagName('option');
+    for (let i = 0; i < options.length; i++) {
+        if (options[i].value === '') continue;
+        const optPatient = options[i].getAttribute('data-patient');
+        if (!patientId || optPatient === String(patientId)) {
+            options[i].style.display = '';
+        } else {
+            options[i].style.display = 'none';
+        }
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">Bienvenue ! Voici ce qui se passe aujourd'hui.</div>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="#" class="btn-primary-sanar">
+            <i class="bi bi-plus-lg"></i> Nouveau
+        </a>
+        <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download"></i>
+        </button>
+    </div>
+</div>
+
+<!-- STATS -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Patients enregistrés</div>
+                    <div class="stat-value">{{ total_patients }}</div>
+                    <div class="stat-change">↑ + cette semaine</div>
+                </div>
+                <i class="bi bi-people stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Rendez-vous du jour</div>
+                    <div class="stat-value">{{ rdv_jour }}</div>
+                    <div class="stat-change" style="color:#64748b;">Planifiés aujourd'hui</div>
+                </div>
+                <i class="bi bi-calendar-check stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card orange">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Analyses en cours</div>
+                    <div class="stat-value">{{ analyses_cours }}</div>
+                    <div class="stat-change" style="color:#64748b;">En attente de résultats</div>
+                </div>
+                <i class="bi bi-graph-up stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card red">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Patients critiques</div>
+                    <div class="stat-value">{{ patients_critiques }}</div>
+                    <div class="stat-change">↑ +2 cette semaine</div>
+                </div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CHARTS + ACTIVITIES -->
+<!-- Activités Médicales Récentes -->
+<div class="col-md-5">
+    <div class="chart-card h-100">
+        <h6 class="fw-bold mb-3" style="color:#1e293b;">
+            Activités Médicales Récentes
+        </h6>
+        {% for activite in activites %}
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="bi {{ activite.icone }}"></i>
+            </div>
+            <div>
+                <div style="font-size:14px;font-weight:600;color:#1e293b;">
+                    {{ activite.texte }}
+                </div>
+                <div style="font-size:12px;color:#94a3b8;">
+                    {{ activite.temps|timesince }} ago
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center text-muted py-3">
+            <i class="bi bi-inbox" style="font-size:24px;"></i>
+            <div class="mt-2" style="font-size:13px;">Aucune activité récente</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const ctx = document.getElementById('consultationsChart').getContext('2d');
+new Chart(ctx, {
+    type: 'line',
+    data: {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [{
+            label: 'Consultations',
+            data: [100, 150, 120, 180, 140, 200],
+            borderColor: '#2563EB',
+            backgroundColor: 'rgba(37, 99, 235, 0.08)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4,
+            pointBackgroundColor: '#2563EB',
+            pointRadius: 4,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            y: {
+                beginAtZero: false,
+                min: 100,
+                grid: { color: '#f1f5f9' }
+            },
+            x: { grid: { display: false } }
+        }
+    }
+});
+</script>
+{% endblock %}

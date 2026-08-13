@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block title %}Marquer comme payé{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Enregistrer un paiement</div>
+        <div class="page-subtitle">
+            {{ facture.facture_id }} — 
+            {{ facture.patient.prenom }} {{ facture.patient.nom }}
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <div class="chart-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Statut de paiement</label>
+                    <select name="statut" class="form-select">
+                        <option value="payee">Payée intégralement</option>
+                        <option value="partiel">Paiement partiel</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Moyen de paiement</label>
+                    <select name="moyen_paiement" class="form-select">
+                        <option value="moov">Moov Money (Flooz)</option>
+                        <option value="mtn">MTN Mobile Money</option>
+                        <option value="orange">Orange Money</option>
+                        <option value="wave">Wave</option>
+                        <option value="celtiis">Celtiis Cash</option>
+                        <option value="carte">Carte bancaire</option>
+                        <option value="especes">Espèces</option>
+                        <option value="virement">Virement</option>
+                        <option value="assurance">Assurance CNSS</option>
+                    </select>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-primary-sanar">
+                        <i class="bi bi-check-circle"></i> 
+                        Confirmer le paiement
+                    </button>
+                    <a href="{% url 'facturation:liste' %}" 
+                       class="btn btn-outline-secondary">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">Détails de la facture</h6>
+            <div class="mb-2">
+                <small class="text-muted">Patient</small>
+                <div class="fw-semibold">
+                    {{ facture.patient.prenom }} {{ facture.patient.nom }}
+                </div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted">Description</small>
+                <div class="fw-semibold">{{ facture.description }}</div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted">Montant total</small>
+                <div class="fw-semibold" style="font-size:18px;color:#2563EB;">
+                    {{ facture.montant_total|floatformat:0 }} FCFA
+                </div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted">Part patient</small>
+                <div class="fw-semibold">
+                    {{ facture.part_patient|floatformat:0 }} FCFA
+                </div>
+            </div>
+            <div class="mb-2">
+                <small class="text-muted">Part assurance</small>
+                <div class="fw-semibold">
+                    {{ facture.part_assurance|floatformat:0 }} FCFA
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

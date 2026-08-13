@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter un médecin{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Ajouter un médecin</div>
+        <div class="page-subtitle">Enregistrer un nouveau médecin sur la plateforme</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Prénom *</label>
+                        <input type="text" name="prenom" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nom *</label>
+                        <input type="text" name="nom" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Spécialité *</label>
+                        <select name="specialite" class="form-select" required>
+                            <option value="">-- Choisir --</option>
+                            <option value="cardiologue">Cardiologue</option>
+                            <option value="generaliste">Généraliste</option>
+                            <option value="dermatologue">Dermatologue</option>
+                            <option value="gynecologue">Gynécologue</option>
+                            <option value="neurologue">Neurologue</option>
+                            <option value="ophtalmologue">Ophtalmologue</option>
+                            <option value="pediatre">Pédiatre</option>
+                            <option value="radiologue">Radiologue</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Téléphone *</label>
+                        <input type="text" name="telephone" class="form-control"
+                               placeholder="+225 07 00 00 00 00" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Email</label>
+                        <input type="email" name="email" class="form-control"
+                               placeholder="docteur@sanar.ci">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Cabinet / Clinique</label>
+                        <input type="text" name="cabinet" class="form-control"
+                               placeholder="Ex: Clinique Centrale, Plateau">
+                    </div>
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button type="submit" class="btn-primary-sanar">
+                            <i class="bi bi-plus-lg"></i> Ajouter le médecin
+                        </button>
+                        <a href="{% url 'medecins:liste' %}"
+                           class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-info-circle text-primary"></i> Info
+            </h6>
+            <p style="font-size:13px;color:#64748b;">
+                Le médecin sera disponible sur l'application mobile Flutter 
+                dans le formulaire de prise de rendez-vous.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,389 @@
+{% extends 'base.html' %}
+{% block title %}Consultations{% endblock %}
+
+{% block extra_css %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Gestion Des Consultations</div>
+        <div class="page-subtitle">
+            Suivi des patients, rendez-vous et dossiers médicaux
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-download"></i> Exporter
+        </button>
+        <button class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-clockwise"></i> Mise à jour
+        </button>
+        <a href="{% url 'consultations:ajouter' %}" class="btn-primary-sanar">
+            <i class="bi bi-plus-lg"></i> Nouvelle consultation
+        </a>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Total Consultations</div>
+                    <div class="stat-value">{{ total }}</div>
+                    <div class="stat-change">↑ +{{ pourcentage_ce_mois }}% ce mois</div>
+                </div>
+                <i class="bi bi-calendar2-check stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card orange">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">En attente</div>
+                    <div class="stat-value">{{ en_attente }}</div>
+                    <div class="stat-change" style="color:#D97706;">
+                        ⚠ À confirmer
+                    </div>
+                </div>
+                <i class="bi bi-hourglass stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">En cours</div>
+                    <div class="stat-value">{{ en_cours }}</div>
+                    <div class="stat-change">→ Aujourd'hui</div>
+                </div>
+                <i class="bi bi-activity stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card red">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Terminées</div>
+                    <div class="stat-value">{{ terminees }}</div>
+                    <div class="stat-change">↑ +{{ pourcentage_cette_semaine }}% cette semaine</div>
+                </div>
+                <i class="bi bi-check2-circle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row g-3 mb-4">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0" style="color:#1e293b;">
+                    Évolution des consultations
+                </h6>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-primary">7J</button>
+                    <button class="btn btn-sm btn-outline-secondary">30J</button>
+                    <button class="btn btn-sm btn-outline-secondary">90J</button>
+                </div>
+            </div>
+            <canvas id="evolutionChart" height="120"></canvas>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">
+                Statuts de consultation
+            </h6>
+            <canvas id="statutChart" height="160"></canvas>
+            <div class="mt-3">
+                <div class="d-flex justify-content-between mb-1">
+                    <span style="font-size:13px;color:#64748b;">En attente</span>
+                    <span style="font-size:13px;font-weight:600;">
+                        {{ en_attente }}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span style="font-size:13px;color:#64748b;">Terminée</span>
+                    <span style="font-size:13px;font-weight:600;">
+                        {{ terminees }}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span style="font-size:13px;color:#64748b;">En cours</span>
+                    <span style="font-size:13px;font-weight:600;">
+                        {{ en_cours }}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between mb-1">
+                    <span style="font-size:13px;color:#64748b;">Reportée</span>
+                    <span style="font-size:13px;font-weight:600;">
+                        {{ reportees }}
+                    </span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span style="font-size:13px;color:#64748b;">Annulée</span>
+                    <span style="font-size:13px;font-weight:600;">
+                        {{ annulees }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Liste -->
+<div class="chart-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:#1e293b;">Liste des Consultations</h6>
+        <div class="d-flex gap-2">
+            <form method="get" class="d-flex gap-2">
+                <input type="text" name="q" value="{{ recherche }}"
+                       class="form-control form-control-sm"
+                       placeholder="Rechercher patient, médecin..."
+                       style="width:220px;">
+                <select name="statut" class="form-select form-select-sm"
+                        style="width:150px;" onchange="this.form.submit()">
+                    <option value="">Tous les statuts</option>
+                    <option value="en_attente" 
+                        {% if statut_filtre == 'en_attente' %}selected{% endif %}>
+                        En attente
+                    </option>
+                    <option value="en_cours" 
+                        {% if statut_filtre == 'en_cours' %}selected{% endif %}>
+                        En cours
+                    </option>
+                    <option value="terminee" 
+                        {% if statut_filtre == 'terminee' %}selected{% endif %}>
+                        Terminée
+                    </option>
+                    <option value="reportee" 
+                        {% if statut_filtre == 'reportee' %}selected{% endif %}>
+                        Reportée
+                    </option>
+                    <option value="annulee" 
+                        {% if statut_filtre == 'annulee' %}selected{% endif %}>
+                        Annulée
+                    </option>
+                </select>
+                <button type="submit" class="btn btn-sm btn-primary">
+                    <i class="bi bi-search"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <table class="table table-hover">
+        <thead style="background:#f8fafc;">
+            <tr>
+                <th><input type="checkbox"></th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    ID CONSULTATION
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">PATIENT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">MÉDECIN</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">MOTIF</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">
+                    COÛT (FCFA)
+                </th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">STATUT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">DATE</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for c in consultations %}
+            <tr>
+                <td><input type="checkbox"></td>
+                <td>
+                    <div style="font-size:13px;font-weight:600;color:#2563EB;">
+                        {{ c.consultation_id }}
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;">
+                        Réf: #{{ c.pk }}
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:34px;height:34px;background:#eff6ff;
+                                    border-radius:50%;display:flex;align-items:center;
+                                    justify-content:center;color:#2563EB;
+                                    font-weight:700;font-size:12px;">
+                            {{ c.patient.prenom|first }}{{ c.patient.nom|first }}
+                        </div>
+                        <div>
+                            <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                                {{ c.patient.prenom }} {{ c.patient.nom }}
+                            </div>
+                            <div style="font-size:11px;color:#94a3b8;">
+                                {{ c.patient.telephone }}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div style="font-size:13px;font-weight:600;color:#1e293b;">
+                        Dr. {{ c.medecin.nom }}
+                    </div>
+                    <div style="font-size:11px;color:#94a3b8;">
+                        {{ c.medecin.get_specialite_display }}
+                    </div>
+                </td>
+                <td>
+                    <div style="font-size:13px;color:#1e293b;">{{ c.motif }}</div>
+                    <div style="font-size:11px;color:#94a3b8;">
+                        {{ c.type_consultation|default:"—" }}
+                    </div>
+                </td>
+                <td style="font-size:13px;font-weight:600;color:#1e293b;">
+                    {{ c.cout|floatformat:0 }} FCFA
+                </td>
+                <td>
+                    {% if c.statut == 'en_attente' %}
+                        <span class="badge" 
+                              style="background:#FEF3C7;color:#D97706;font-size:12px;">
+                            En Attente
+                        </span>
+                    {% elif c.statut == 'en_cours' %}
+                        <span class="badge" 
+                              style="background:#DBEAFE;color:#2563EB;font-size:12px;">
+                            En cours
+                        </span>
+                    {% elif c.statut == 'terminee' %}
+                        <span class="badge" 
+                              style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                            Terminée
+                        </span>
+                    {% elif c.statut == 'reportee' %}
+                        <span class="badge" 
+                              style="background:#F3E8FF;color:#9333EA;font-size:12px;">
+                            Reportée
+                        </span>
+                    {% else %}
+                        <span class="badge" 
+                              style="background:#FEE2E2;color:#DC2626;font-size:12px;">
+                            Annulée
+                        </span>
+                    {% endif %}
+                </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {{ c.date|date:"d/m/Y" }}
+                </td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                                data-bs-toggle="dropdown">···</button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" 
+                                   href="{% url 'consultations:detail' c.pk %}">
+                                    <i class="bi bi-eye"></i> Voir détails
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item" 
+                                   href="{% url 'consultations:modifier_statut' c.pk %}">
+                                    <i class="bi bi-pencil"></i> Modifier statut
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="#">
+                                    <i class="bi bi-trash"></i> Supprimer
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="9" class="text-center text-muted py-5">
+                    <i class="bi bi-clipboard2" style="font-size:32px;"></i>
+                    <div class="mt-2">Aucune consultation trouvée</div>
+                    <a href="{% url 'consultations:ajouter' %}" 
+                       class="btn-primary-sanar d-inline-flex mt-3">
+                        <i class="bi bi-plus-lg"></i> Nouvelle consultation
+                    </a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Graphique évolution
+const ctx1 = document.getElementById('evolutionChart').getContext('2d');
+new Chart(ctx1, {
+    type: 'line',
+    data: {
+        labels: ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'],
+        datasets: [
+            {
+                label: 'Consultations',
+                data: [12, 15, 14, 18, 20, 25, 22],
+                borderColor: '#2563EB',
+                backgroundColor: 'rgba(37,99,235,0.08)',
+                fill: true,
+                tension: 0.4,
+                yAxisID: 'y',
+            },
+            {
+                label: 'Revenus (FCFA×1000)',
+                data: [120, 165, 210, 250, 306, 389, 310],
+                borderColor: '#16A34A',
+                backgroundColor: 'rgba(22,163,74,0.08)',
+                fill: true,
+                tension: 0.4,
+                yAxisID: 'y1',
+            }
+        ]
+    },
+    options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 11 } } } },
+        scales: {
+            y: { position: 'left', grid: { color: '#f1f5f9' } },
+            y1: { position: 'right', grid: { display: false } }
+        }
+    }
+});
+
+// Graphique statuts
+const ctx2 = document.getElementById('statutChart').getContext('2d');
+new Chart(ctx2, {
+    type: 'doughnut',
+    data: {
+        labels: ['En attente', 'Terminée', 'En cours', 'Reportée', 'Annulée'],
+        datasets: [{
+            data: [
+                {{ en_attente }}, {{ terminees }}, 
+                {{ en_cours }}, {{ reportees }}, {{ annulees }}
+            ],
+            backgroundColor: [
+                '#F59E0B', '#16A34A', '#2563EB', '#9333EA', '#DC2626'
+            ],
+            borderWidth: 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false },
+        },
+        cutout: '65%',
+    }
+});
+</script>
+{% endblock %}

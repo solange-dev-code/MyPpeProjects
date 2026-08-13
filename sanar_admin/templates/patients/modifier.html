@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Modifier patient{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">
+            Modifier — {{ patient.prenom }} {{ patient.nom }}
+        </div>
+        <div class="page-subtitle">{{ patient.patient_id }}</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="chart-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Prénom *</label>
+                        <input type="text" name="prenom" class="form-control"
+                               value="{{ patient.prenom }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nom *</label>
+                        <input type="text" name="nom" class="form-control"
+                               value="{{ patient.nom }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Email *</label>
+                        <input type="email" name="email" class="form-control"
+                               value="{{ patient.email }}" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Téléphone</label>
+                        <input type="text" name="telephone" class="form-control"
+                               value="{{ patient.telephone }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Date de naissance</label>
+                        <input type="date" name="date_naissance" class="form-control"
+                               value="{{ patient.date_naissance|date:'Y-m-d' }}">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Groupe sanguin</label>
+                        <select name="groupe_sanguin" class="form-select">
+                            {% for val, label in patient.GROUPE_SANGUIN_CHOICES %}
+                            <option value="{{ val }}"
+                                {% if patient.groupe_sanguin == val %}selected{% endif %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Poids (kg)</label>
+                        <input type="number" name="poids" class="form-control"
+                               value="{{ patient.poids }}" step="0.1">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Taille (cm)</label>
+                        <input type="number" name="taille" class="form-control"
+                               value="{{ patient.taille }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Adresse</label>
+                        <input type="text" name="adresse" class="form-control"
+                               value="{{ patient.adresse }}">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Allergies</label>
+                        <input type="text" name="allergies" class="form-control"
+                               value="{{ patient.allergies }}">
+                    </div>
+                    <div class="col-12">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox"
+                                   name="est_critique" id="est_critique"
+                                   {% if patient.est_critique %}checked{% endif %}>
+                            <label class="form-check-label" for="est_critique">
+                                Marquer comme critique / urgence
+                            </label>
+                        </div>
+                    </div>
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button type="submit" class="btn-primary-sanar">
+                            <i class="bi bi-check-lg"></i> Enregistrer
+                        </button>
+                        <a href="{% url 'patients:liste' %}"
+                           class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-info-circle text-primary"></i> Info
+            </h6>
+            <p style="font-size:13px;color:#64748b;">
+                Les modifications seront synchronisées avec l'application 
+                mobile Flutter du patient.
+            </p>
+            <hr>
+            <div style="font-size:13px;">
+                <div class="mb-2">
+                    <span class="text-muted">Patient ID :</span>
+                    <strong class="ms-2 text-primary">{{ patient.patient_id }}</strong>
+                </div>
+                <div class="mb-2">
+                    <span class="text-muted">Inscrit le :</span>
+                    <strong class="ms-2">
+                        {{ patient.date_inscription|date:"d/m/Y" }}
+                    </strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

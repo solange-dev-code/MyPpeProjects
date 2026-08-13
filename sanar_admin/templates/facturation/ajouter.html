@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% block title %}Nouvelle facture{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Nouvelle facture</div>
+        <div class="page-subtitle">Créer une nouvelle facture patient</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="chart-card">
+
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-danger mb-3">{{ message }}</div>
+            {% endfor %}
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+
+                    <!-- Recherche patient -->
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            Patient *
+                            <small class="text-muted fw-normal">
+                                (tapez pour rechercher)
+                            </small>
+                        </label>
+                        <div style="position:relative;">
+                            <input type="text" id="searchPatient"
+                                   class="form-control"
+                                   placeholder="Ex: Kouadio, Michel..."
+                                   autocomplete="off"
+                                   onkeyup="filtrerPatients()"
+                                   onfocus="showDropdown()">
+                            <div id="dropdownPatient"
+                                 style="display:none;position:absolute;
+                                        top:100%;left:0;right:0;
+                                        background:white;
+                                        border:1px solid #e2e8f0;
+                                        border-radius:8px;
+                                        max-height:200px;overflow-y:auto;
+                                        z-index:1000;
+                                        box-shadow:0 4px 12px rgba(0,0,0,0.1);">
+                                {% for p in patients %}
+                                <div class="patient-option"
+                                     data-id="{{ p.pk }}"
+                                     data-nom="{{ p.prenom }} {{ p.nom }}"
+                                     onclick="selectPatient({{ p.pk }}, '{{ p.prenom }} {{ p.nom }}')"
+                                     style="padding:10px 14px;cursor:pointer;
+                                            font-size:14px;
+                                            border-bottom:1px solid #f1f5f9;">
+                                    <div style="font-weight:600;color:#1e293b;">
+                                        {{ p.prenom }} {{ p.nom }}
+                                    </div>
+                                    <div style="font-size:12px;color:#94a3b8;">
+                                        {{ p.patient_id }} — {{ p.telephone }}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                        <!-- Champ caché qui envoie l'ID -->
+                        <input type="hidden" name="patient" id="patientId">
+                        <div id="patientSelected"
+                             style="display:none;margin-top:6px;
+                                    padding:8px 12px;background:#eff6ff;
+                                    border-radius:8px;font-size:13px;
+                                    color:#2563EB;">
+                            <i class="bi bi-check-circle"></i>
+                            <span id="patientSelectedNom"></span>
+                            <span style="cursor:pointer;margin-left:8px;
+                                         color:#dc2626;"
+                                  onclick="resetPatient()">✕</span>
+                        </div>
+                    </div>
+
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            Acte / Prestation *
+                        </label>
+                        <input type="text" name="description"
+                               class="form-control"
+                               placeholder="Ex: Consultation spécialisée"
+                               required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            Montant total (FCFA) *
+                        </label>
+                        <input type="number" name="montant_total"
+                               class="form-control" placeholder="250000"
+                               min="0" required>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            Part assurance (FCFA)
+                        </label>
+                        <input type="number" name="part_assurance"
+                               class="form-control" placeholder="0"
+                               min="0" value="0">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label fw-semibold">
+                            Moyen de paiement
+                        </label>
+                        <select name="moyen_paiement" class="form-select">
+                            <option value="">-- Choisir --</option>
+                            <option value="moov">Moov Money (Flooz)</option>
+                            <option value="mtn">MTN Mobile Money</option>
+                            <option value="orange">Orange Money</option>
+                            <option value="wave">Wave</option>
+                            <option value="celtiis">Celtiis Cash</option>
+                            <option value="carte">Carte bancaire</option>
+                            <option value="especes">Espèces</option>
+                            <option value="virement">Virement</option>
+                            <option value="assurance">Assurance CNSS</option>
+                        </select>
+                    </div>
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button type="submit" class="btn-primary-sanar">
+                            <i class="bi bi-plus-lg"></i> Créer la facture
+                        </button>
+                        <a href="{% url 'facturation:liste' %}"
+                           class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-info-circle text-primary"></i> Info
+            </h6>
+            <p style="font-size:13px;color:#64748b;">
+                La facture sera visible sur l'application mobile Flutter
+                du patient dans la section <strong>Paiements</strong>.
+            </p>
+            <hr>
+            <p style="font-size:13px;color:#64748b;">
+                <i class="bi bi-phone text-success"></i>
+                Le patient pourra payer via Mobile Money directement
+                depuis l'application.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Ferme dropdown si clic ailleurs
+document.addEventListener('click', function(e) {
+    const search = document.getElementById('searchPatient');
+    const dropdown = document.getElementById('dropdownPatient');
+    if (!search.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.style.display = 'none';
+    }
+});
+
+function showDropdown() {
+    document.getElementById('dropdownPatient').style.display = 'block';
+}
+
+function filtrerPatients() {
+    const recherche = document.getElementById('searchPatient')
+                               .value.toLowerCase();
+    const options = document.getElementsByClassName('patient-option');
+    document.getElementById('dropdownPatient').style.display = 'block';
+    for (let i = 0; i < options.length; i++) {
+        const texte = options[i].getAttribute('data-nom').toLowerCase();
+        options[i].style.display = texte.includes(recherche) ? '' : 'none';
+    }
+    document.getElementById('patientId').value = '';
+    document.getElementById('patientSelected').style.display = 'none';
+}
+
+function selectPatient(id, nom) {
+    document.getElementById('patientId').value = id;
+    document.getElementById('searchPatient').value = nom;
+    document.getElementById('patientSelectedNom').textContent = nom;
+    document.getElementById('patientSelected').style.display = 'block';
+    document.getElementById('dropdownPatient').style.display = 'none';
+}
+
+function resetPatient() {
+    document.getElementById('patientId').value = '';
+    document.getElementById('searchPatient').value = '';
+    document.getElementById('patientSelected').style.display = 'none';
+}
+
+// Validation avant soumission
+document.querySelector('form').addEventListener('submit', function(e) {
+    const patientId = document.getElementById('patientId').value;
+    if (!patientId) {
+        e.preventDefault();
+        alert('Veuillez sélectionner un patient dans la liste.');
+        document.getElementById('searchPatient').focus();
+        showDropdown();
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+{% block title %}Modifier {{ hopital.nom }}{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div class="page-title">Modifier {{ hopital.nom }}</div>
+</div>
+
+<div class="chart-card" style="max-width:600px;">
+    <form method="post">
+        {% csrf_token %}
+        <div class="mb-3">
+            <label class="form-label">Nom</label>
+            <input type="text" name="nom" class="form-control" value="{{ hopital.nom }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Ville</label>
+            <input type="text" name="ville" class="form-control" value="{{ hopital.ville }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Adresse</label>
+            <input type="text" name="adresse" class="form-control" value="{{ hopital.adresse }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Téléphone</label>
+            <input type="text" name="telephone" class="form-control" value="{{ hopital.telephone }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input type="email" name="email" class="form-control" value="{{ hopital.email }}">
+        </div>
+        <div class="row">
+            <div class="col mb-3">
+                <label class="form-label">Latitude</label>
+                <input type="number" step="any" name="latitude" class="form-control" value="{{ hopital.latitude|default_if_none:'' }}">
+            </div>
+            <div class="col mb-3">
+                <label class="form-label">Longitude</label>
+                <input type="number" step="any" name="longitude" class="form-control" value="{{ hopital.longitude|default_if_none:'' }}">
+            </div>
+        </div>
+        <div class="form-check mb-3">
+            <input type="checkbox" name="actif" class="form-check-input" {% if hopital.actif %}checked{% endif %}>
+            <label class="form-check-label">Actif</label>
+        </div>
+        <button type="submit" class="btn-primary-sanar">Enregistrer</button>
+        <a href="{% url 'hopitaux:liste' %}" class="btn btn-outline-secondary">Annuler</a>
+    </form>
+</div>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Modifier statut{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Modifier — {{ consultation.consultation_id }}</div>
+        <div class="page-subtitle">
+            {{ consultation.patient.prenom }} {{ consultation.patient.nom }}
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-7">
+        <div class="chart-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Statut *</label>
+                    <select name="statut" class="form-select" required>
+                        <option value="en_attente"
+                            {% if consultation.statut == 'en_attente' %}selected{% endif %}>
+                            En attente
+                        </option>
+                        <option value="en_cours"
+                            {% if consultation.statut == 'en_cours' %}selected{% endif %}>
+                            En cours
+                        </option>
+                        <option value="terminee"
+                            {% if consultation.statut == 'terminee' %}selected{% endif %}>
+                            Terminée
+                        </option>
+                        <option value="reportee"
+                            {% if consultation.statut == 'reportee' %}selected{% endif %}>
+                            Reportée
+                        </option>
+                        <option value="annulee"
+                            {% if consultation.statut == 'annulee' %}selected{% endif %}>
+                            Annulée
+                        </option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Diagnostic</label>
+                    <textarea name="diagnostic" class="form-control" rows="3">
+{{ consultation.diagnostic }}</textarea>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label fw-semibold">Notes</label>
+                    <textarea name="notes" class="form-control" rows="3">
+{{ consultation.notes }}</textarea>
+                </div>
+                <div class="d-flex gap-2">
+                    <button type="submit" class="btn-primary-sanar">
+                        <i class="bi bi-check-lg"></i> Enregistrer
+                    </button>
+                    <a href="{% url 'consultations:liste' %}"
+                       class="btn btn-outline-secondary">Annuler</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    <div class="col-md-5">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">Informations</h6>
+            <table class="table table-sm">
+                <tr>
+                    <td class="text-muted">ID</td>
+                    <td class="fw-semibold text-primary">
+                        {{ consultation.consultation_id }}
+                    </td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Patient</td>
+                    <td>{{ consultation.patient.prenom }} {{ consultation.patient.nom }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Médecin</td>
+                    <td>Dr. {{ consultation.medecin.nom }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Date</td>
+                    <td>{{ consultation.date|date:"d/m/Y" }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Motif</td>
+                    <td>{{ consultation.motif }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

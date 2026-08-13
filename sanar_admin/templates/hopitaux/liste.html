@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Hôpitaux{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Hôpitaux</div>
+        <div class="page-subtitle">{{ total }} hôpital(aux) enregistré(s) — {{ actifs }} actif(s)</div>
+    </div>
+    <a href="{% url 'hopitaux:ajouter' %}" class="btn-primary-sanar">
+        <i class="bi bi-plus-lg"></i> Ajouter un hôpital
+    </a>
+</div>
+
+<div class="chart-card">
+    <form method="get" class="mb-3">
+        <input type="text" name="q" class="form-control" style="max-width:300px;"
+               placeholder="Rechercher un hôpital..." value="{{ recherche }}">
+    </form>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Ville</th>
+                <th>Adresse</th>
+                <th>Téléphone</th>
+                <th>Statut</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for h in hopitaux %}
+            <tr>
+                <td>{{ h.nom }}</td>
+                <td>{{ h.ville }}</td>
+                <td>{{ h.adresse }}</td>
+                <td>{{ h.telephone|default:"—" }}</td>
+                <td>
+                    {% if h.actif %}
+                        <span class="badge bg-success">Actif</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Inactif</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'hopitaux:modifier' h.pk %}" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-pencil"></i>
+                    </a>
+                    <form method="post" action="{% url 'hopitaux:supprimer' h.pk %}" style="display:inline;"
+                          onsubmit="return confirm('Supprimer cet hôpital ?');">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                    </form>
+                </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="6" class="text-center text-muted">Aucun hôpital enregistré.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

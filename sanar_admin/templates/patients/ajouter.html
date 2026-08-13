@@ -1,0 +1,103 @@
+{% extends 'base.html' %}
+{% block title %}Ajouter un patient{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Ajouter un patient</div>
+        <div class="page-subtitle">Créer un nouveau dossier patient</div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-8">
+        <div class="chart-card">
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Prénom *</label>
+                        <input type="text" name="prenom" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Nom *</label>
+                        <input type="text" name="nom" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Email *</label>
+                        <input type="email" name="email" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Téléphone *</label>
+                        <input type="text" name="telephone" class="form-control" 
+                               placeholder="+225 07 00 00 00 00">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Date de naissance *</label>
+                        <input type="date" name="date_naissance" class="form-control" required>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Groupe sanguin *</label>
+                        <select name="groupe_sanguin" class="form-select" required>
+                            <option value="A+">A+</option>
+                            <option value="A-">A-</option>
+                            <option value="B+">B+</option>
+                            <option value="B-">B-</option>
+                            <option value="AB+">AB+</option>
+                            <option value="AB-">AB-</option>
+                            <option value="O+">O+</option>
+                            <option value="O-">O-</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Poids (kg)</label>
+                        <input type="number" name="poids" class="form-control" 
+                               step="0.1" placeholder="75">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Taille (cm)</label>
+                        <input type="number" name="taille" class="form-control" 
+                               placeholder="175">
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Adresse *</label>
+                        <input type="text" name="adresse" class="form-control" 
+                               placeholder="Lome, Agbalepedo" required>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Allergies</label>
+                        <input type="text" name="allergies" class="form-control" 
+                               placeholder="Pénicilline, Aspirine...">
+                    </div>
+                    <div class="col-12 d-flex gap-2 mt-2">
+                        <button type="submit" class="btn-primary-sanar">
+                            <i class="bi bi-plus-lg"></i> Créer le dossier patient
+                        </button>
+                        <a href="{% url 'patients:liste' %}" 
+                           class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3" style="color:#1e293b;">
+                <i class="bi bi-info-circle text-primary"></i> Information
+            </h6>
+            <p style="font-size:13px;color:#64748b;">
+                Un ID patient unique sera généré automatiquement.
+                Le patient pourra se connecter sur l'application mobile 
+                Sanar avec son email et mot de passe.
+            </p>
+            <hr>
+            <p style="font-size:13px;color:#64748b;">
+                <i class="bi bi-shield-check text-success"></i>
+                Les données sont synchronisées en temps réel avec 
+                l'application mobile Flutter.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

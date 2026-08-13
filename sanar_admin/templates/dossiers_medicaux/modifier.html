@@ -1,0 +1,301 @@
+{% extends 'base.html' %}
+{% block title %}Modifier dossier{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">
+            Modifier dossier — {{ dossier.patient.prenom }} {{ dossier.patient.nom }}
+        </div>
+        <div class="page-subtitle">{{ dossier.patient.patient_id }}</div>
+    </div>
+    <a href="{% url 'dossiers_medicaux:detail' dossier.pk %}"
+       class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left"></i> Retour
+    </a>
+</div>
+
+<div class="row g-3">
+    <!-- Infos médicales -->
+    <div class="col-md-8">
+        <div class="chart-card mb-3">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-clipboard2-pulse text-primary"></i>
+                Informations médicales
+            </h6>
+            <form method="post">
+                {% csrf_token %}
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Statut</label>
+                        <select name="statut" class="form-select">
+                            <option value="en_attente"
+                                {% if dossier.statut == 'en_attente' %}selected{% endif %}>
+                                En attente
+                            </option>
+                            <option value="valide"
+                                {% if dossier.statut == 'valide' %}selected{% endif %}>
+                                Validé
+                            </option>
+                            <option value="urgent"
+                                {% if dossier.statut == 'urgent' %}selected{% endif %}>
+                                Urgent
+                            </option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            Antécédents médicaux
+                        </label>
+                        <textarea name="antecedents" class="form-control"
+                                  rows="3">{{ dossier.antecedents }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">
+                            Traitements en cours
+                        </label>
+                        <textarea name="traitements" class="form-control"
+                                  rows="3">{{ dossier.traitements_en_cours }}</textarea>
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label fw-semibold">Notes médicales</label>
+                        <textarea name="notes" class="form-control"
+                                  rows="3">{{ dossier.notes_medicales }}</textarea>
+                    </div>
+                    <div class="col-12 d-flex gap-2">
+                        <button type="submit" class="btn-primary-sanar">
+                            <i class="bi bi-check-lg"></i> Enregistrer
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Prescriptions actives -->
+        <div class="chart-card mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h6 class="fw-bold mb-0">
+                    <i class="bi bi-capsule text-success"></i>
+                    Prescriptions actives
+                </h6>
+            </div>
+
+            {% if prescriptions %}
+            <table class="table table-sm mb-3">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        <th style="font-size:12px;color:#2563EB;">MÉDICAMENT</th>
+                        <th style="font-size:12px;color:#2563EB;">POSOLOGIE</th>
+                        <th style="font-size:12px;color:#2563EB;">DURÉE</th>
+                        <th style="font-size:12px;color:#2563EB;">STATUT</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for p in prescriptions %}
+                    <tr>
+                        <td style="font-size:13px;font-weight:600;">
+                            {{ p.medicament }}
+                        </td>
+                        <td style="font-size:13px;">{{ p.posologie }}</td>
+                        <td style="font-size:13px;">{{ p.duree }}</td>
+                        <td>
+                            {% if p.est_active %}
+                            <span class="badge"
+                                  style="background:#DCFCE7;color:#16A34A;
+                                         font-size:11px;">Active</span>
+                            {% else %}
+                            <span class="badge"
+                                  style="background:#F1F5F9;color:#64748b;
+                                         font-size:11px;">Terminée</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% endif %}
+
+            <!-- Ajouter prescription -->
+            <form method="post"
+                  action="{% url 'dossiers_medicaux:ajouter_prescription' dossier.pk %}">
+                {% csrf_token %}
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <input type="text" name="medicament"
+                               class="form-control form-control-sm"
+                               placeholder="Médicament *" required>
+                    </div>
+                    <div class="col-md-4">
+                        <input type="text" name="posologie"
+                               class="form-control form-control-sm"
+                               placeholder="Posologie *" required>
+                    </div>
+                    <div class="col-md-2">
+                        <input type="text" name="duree"
+                               class="form-control form-control-sm"
+                               placeholder="Durée *" required>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit"
+                                class="btn btn-success btn-sm w-100">
+                            <i class="bi bi-plus-lg"></i> Ajouter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- Résultats d'analyses -->
+        <div class="chart-card mb-3">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-graph-up text-purple"></i>
+                Résultats d'analyses
+            </h6>
+            {% if analyses %}
+            <table class="table table-sm">
+                <thead style="background:#f8fafc;">
+                    <tr>
+                        <th style="font-size:12px;color:#2563EB;">TYPE</th>
+                        <th style="font-size:12px;color:#2563EB;">LABO</th>
+                        <th style="font-size:12px;color:#2563EB;">DATE</th>
+                        <th style="font-size:12px;color:#2563EB;">STATUT</th>
+                        <th style="font-size:12px;color:#2563EB;">FICHIER</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for a in analyses %}
+                    <tr>
+                        <td style="font-size:13px;">
+                            {{ a.get_type_analyse_display }}
+                        </td>
+                        <td style="font-size:13px;color:#64748b;">
+                            {{ a.laboratoire }}
+                        </td>
+                        <td style="font-size:13px;color:#64748b;">
+                            {{ a.date|date:"d/m/Y" }}
+                        </td>
+                        <td>
+                            {% if a.statut == 'disponible' %}
+                            <span class="badge"
+                                  style="background:#DCFCE7;color:#16A34A;
+                                         font-size:11px;">Disponible</span>
+                            {% elif a.statut == 'en_attente' %}
+                            <span class="badge"
+                                  style="background:#FEF3C7;color:#D97706;
+                                         font-size:11px;">En attente</span>
+                            {% else %}
+                            <span class="badge"
+                                  style="background:#FEE2E2;color:#DC2626;
+                                         font-size:11px;">Critique</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if a.fichier_pdf %}
+                            <a href="{{ a.fichier_pdf.url }}"
+                               class="btn btn-sm btn-outline-primary"
+                               target="_blank" style="font-size:11px;">
+                                <i class="bi bi-file-pdf"></i> Voir
+                            </a>
+                            {% else %}
+                            <span style="font-size:12px;color:#94a3b8;">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            {% else %}
+            <div class="text-center text-muted py-3" style="font-size:13px;">
+                Aucune analyse pour ce patient
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Ajouter document -->
+        <div class="chart-card">
+            <h6 class="fw-bold mb-3">
+                <i class="bi bi-file-earmark-plus text-warning"></i>
+                Ajouter un document
+            </h6>
+            <form method="post"
+                  action="{% url 'dossiers_medicaux:ajouter_document' dossier.pk %}"
+                  enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <input type="text" name="titre"
+                               class="form-control form-control-sm"
+                               placeholder="Titre du document *" required>
+                    </div>
+                    <div class="col-md-3">
+                        <select name="type_document"
+                                class="form-select form-select-sm" required>
+                            <option value="ordonnance">Ordonnance</option>
+                            <option value="analyse">Résultat d'analyse</option>
+                            <option value="imagerie">Imagerie (Radio/IRM)</option>
+                            <option value="compte_rendu">Compte-rendu</option>
+                            <option value="autre">Autre</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <input type="file" name="fichier"
+                               class="form-control form-control-sm"
+                               accept=".pdf,.jpg,.jpeg,.png">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit"
+                                class="btn btn-warning btn-sm w-100">
+                            <i class="bi bi-upload"></i> Ajouter
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Infos patient -->
+    <div class="col-md-4">
+        <div class="chart-card mb-3">
+            <h6 class="fw-bold mb-3">Patient</h6>
+            <div class="d-flex align-items-center gap-3 mb-3">
+                <div style="width:48px;height:48px;background:#eff6ff;
+                            border-radius:50%;display:flex;align-items:center;
+                            justify-content:center;color:#2563EB;
+                            font-weight:700;font-size:16px;">
+                    {{ dossier.patient.prenom|first }}{{ dossier.patient.nom|first }}
+                </div>
+                <div>
+                    <div class="fw-bold">
+                        {{ dossier.patient.prenom }} {{ dossier.patient.nom }}
+                    </div>
+                    <div class="text-muted" style="font-size:13px;">
+                        {{ dossier.patient.patient_id }}
+                    </div>
+                </div>
+            </div>
+            <table class="table table-sm">
+                <tr>
+                    <td class="text-muted">Groupe sanguin</td>
+                    <td class="fw-semibold">{{ dossier.patient.groupe_sanguin }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Allergies</td>
+                    <td>{{ dossier.patient.allergies|default:"Aucune" }}</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Poids</td>
+                    <td>{{ dossier.patient.poids|default:"—" }} kg</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Taille</td>
+                    <td>{{ dossier.patient.taille|default:"—" }} cm</td>
+                </tr>
+                <tr>
+                    <td class="text-muted">Téléphone</td>
+                    <td>{{ dossier.patient.telephone }}</td>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

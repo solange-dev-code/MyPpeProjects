@@ -1,0 +1,249 @@
+{% extends 'base.html' %}
+{% block title %}Analyses médicales{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <div class="page-title">Analyses médicales</div>
+        <div class="page-subtitle">
+            Suivi des prescriptions, résultats et anomalies biologiques
+        </div>
+    </div>
+    <div class="d-flex gap-2">
+        <div class="btn-group">
+            <button class="btn btn-outline-secondary btn-sm active">Aujourd'hui</button>
+            <button class="btn btn-outline-secondary btn-sm">7J</button>
+            <button class="btn btn-outline-secondary btn-sm">30J</button>
+            <button class="btn btn-outline-secondary btn-sm">90J</button>
+        </div>
+        <button class="btn-primary-sanar">
+            <i class="bi bi-download"></i> Exporter
+        </button>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card blue">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Analyses aujourd'hui</div>
+                    <div class="stat-value">{{ total_aujourd_hui }}</div>
+                    <div class="stat-change">↑ +12.5% ce mois</div>
+                </div>
+                <i class="bi bi-clipboard2-pulse stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card green">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Patients analysés</div>
+                    <div class="stat-value">{{ patients_analyses }}</div>
+                    <div class="stat-change">↑ +8.2% ce mois</div>
+                </div>
+                <i class="bi bi-people stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card red">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Résultats anormaux</div>
+                    <div class="stat-value">{{ resultats_anormaux }}</div>
+                    <div class="stat-change" style="color:#DC2626;">
+                        ↑ +8 ce mois — à surveiller
+                    </div>
+                </div>
+                <i class="bi bi-exclamation-triangle stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card orange">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">En attente de résultats</div>
+                    <div class="stat-value">{{ en_attente }}</div>
+                    <div class="stat-change" style="color:#64748b;">
+                        <i class="bi bi-clock"></i> Prescriptions non réalisées
+                    </div>
+                </div>
+                <i class="bi bi-hourglass-split stat-icon"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Zone dépôt fichier -->
+<div class="chart-card mb-4">
+    <h6 class="fw-bold mb-3" style="color:#1e293b;">
+        <i class="bi bi-cloud-upload text-primary"></i> 
+        Déposer un résultat d'analyse
+    </h6>
+    <div style="border: 2px dashed #e2e8f0; border-radius: 12px; 
+                padding: 40px; text-align: center; background: #f8fafc;">
+        <i class="bi bi-cloud-arrow-up" style="font-size:48px; color:#94a3b8;"></i>
+        <div style="font-size:15px; font-weight:600; color:#1e293b; margin-top:12px;">
+            Gérer les analyses médicales
+        </div>
+        <div style="font-size:13px; color:#94a3b8; margin-top:4px;">
+            Créez une nouvelle prescription ou déposez un résultat existant
+        </div>
+        <div class="d-flex gap-3 justify-content-center mt-4">
+            <a href="{% url 'analyses:ajouter' %}" 
+               class="btn-primary-sanar d-inline-flex">
+                <i class="bi bi-plus-lg"></i> Nouvelle analyse
+            </a>
+            <a href="{% url 'analyses:resultats' %}"
+               class="btn btn-success d-inline-flex align-items-center gap-2"
+               style="padding:8px 18px;border-radius:8px;font-size:14px;
+                      font-weight:600;text-decoration:none;">
+                <i class="bi bi-upload"></i> Déposer un résultat
+            </a>
+        </div>
+    </div>
+</div>
+<!-- Liste des analyses -->
+<div class="chart-card">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h6 class="fw-bold mb-0" style="color:#1e293b;">
+            <i class="bi bi-table"></i> Liste des analyses médicales
+        </h6>
+        <div class="d-flex gap-2">
+            <input type="text" class="form-control form-control-sm" 
+                   placeholder="Rechercher patient, type..." style="width:220px;">
+            <select class="form-select form-select-sm" style="width:160px;"
+                    onchange="window.location.href='?statut='+this.value">
+                <option value="">Tous les statuts</option>
+                <option value="en_attente" 
+                    {% if statut_filtre == 'en_attente' %}selected{% endif %}>
+                    En attente
+                </option>
+                <option value="disponible" 
+                    {% if statut_filtre == 'disponible' %}selected{% endif %}>
+                    Disponible
+                </option>
+                <option value="critique" 
+                    {% if statut_filtre == 'critique' %}selected{% endif %}>
+                    Critique
+                </option>
+            </select>
+        </div>
+    </div>
+
+    <table class="table table-hover">
+        <thead style="background:#f8fafc;">
+            <tr>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">PATIENT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">TYPE D'ANALYSE</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">LABORATOIRE</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">DATE</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">STATUT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">RÉSULTAT</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">ACTIONS</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for analyse in analyses %}
+            <tr>
+                <td>
+                    <div class="d-flex align-items-center gap-2">
+                        <div style="width:34px;height:34px;background:#eff6ff;
+                                    border-radius:50%;display:flex;align-items:center;
+                                    justify-content:center;color:#2563EB;font-size:13px;
+                                    font-weight:700;">
+                            {{ analyse.patient.prenom|first }}{{ analyse.patient.nom|first }}
+                        </div>
+                        <div>
+                            <div style="font-size:14px;font-weight:600;color:#1e293b;">
+                                {{ analyse.patient.prenom }} {{ analyse.patient.nom }}
+                            </div>
+                            <div style="font-size:12px;color:#94a3b8;">
+                                {{ analyse.patient.telephone }}
+                            </div>
+                        </div>
+                    </div>
+                </td>
+                <td style="font-size:13px;color:#1e293b;">
+                    {{ analyse.get_type_analyse_display }}
+                </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {{ analyse.laboratoire }}
+                </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {{ analyse.date|date:"d/m/Y" }}
+                </td>
+                <td>
+                    {% if analyse.statut == 'disponible' %}
+                        <span class="badge" 
+                              style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                            <i class="bi bi-check-circle"></i> Disponible
+                        </span>
+                    {% elif analyse.statut == 'en_attente' %}
+                        <span class="badge" 
+                              style="background:#FEF3C7;color:#D97706;font-size:12px;">
+                            <i class="bi bi-clock"></i> En attente
+                        </span>
+                    {% else %}
+                        <span class="badge" 
+                              style="background:#FEE2E2;color:#DC2626;font-size:12px;">
+                            <i class="bi bi-exclamation-circle"></i> Critique
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+    {% if analyse.statut == 'en_attente' %}
+        <a href="{% url 'analyses:valider' analyse.pk %}"
+           class="btn btn-sm btn-success" style="font-size:12px;">
+            <i class="bi bi-plus-circle"></i> Ajouter résultat
+        </a>
+    {% elif analyse.statut == 'disponible' %}
+        <div style="font-size:13px;color:#16A34A;font-weight:600;">
+            <i class="bi bi-check-circle"></i> 
+            {{ analyse.conclusion|truncatechars:30|default:"Disponible" }}
+        </div>
+    {% else %}
+        <div style="font-size:13px;color:#DC2626;font-weight:600;">
+            <i class="bi bi-exclamation-circle"></i>
+            {{ analyse.conclusion|truncatechars:30|default:"Critique" }}
+        </div>
+    {% endif %}
+</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-sm btn-outline-secondary dropdown-toggle" 
+                                data-bs-toggle="dropdown">
+                            Actions
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li>
+                                <a class="dropdown-item" 
+                                   href="{% url 'analyses:detail' analyse.pk %}">
+                                    <i class="bi bi-eye"></i> Voir détails
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item text-danger" href="#">
+                                    <i class="bi bi-trash"></i> Supprimer
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-5">
+                    <i class="bi bi-inbox" style="font-size:32px;"></i>
+                    <div class="mt-2">Aucune analyse trouvée</div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
