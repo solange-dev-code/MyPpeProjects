@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
@@ -868,7 +869,6 @@ def health_check(request):
         status['services']['redis'] = 'ok'
     except Exception as e:
         status['services']['redis'] = f'error: {str(e)[:100]}'
-        # Redis non bloquant pour le health check principal
         if status['status'] == 'ok':
             status['status'] = 'degraded'
 
@@ -882,3 +882,348 @@ def health_check(request):
 
     http_status = 200 if status['status'] == 'ok' else 503
     return Response(status, status=http_status)
+
+
+# ═══════════════════════════════════════════════════════════════
+# NOUVEAU : Signature électronique des prescriptions
+# ═══════════════════════════════════════════════════════════════
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def signer_prescription(request, prescription_id):
+    """Signe électroniquement une prescription (médecin uniquement).
+
+    Calcule le hash SHA-256 du contenu + médecin + timestamp et le stocke.
+    Rend la prescription infalsifiable a posteriori.
+    """
+    from dossiers_medicaux.models import Prescription
+    try:
+        prescription = Prescription.objects.get(pk=prescription_id)
+    except Prescription.DoesNotExist:
+        return Response({'error': 'Prescription non trouvée'}, status=404)
+
+    # Vérifier que l'user est un médecin
+    if not hasattr(request.user, 'medecin_profile'):
+        return Response(
+            {'error': 'Seul un médecin peut signer une prescription'},
+            status=403
+        )
+
+    if prescription.est_signee:
+        return Response(
+            {'error': 'Prescription déjà signée', 'date_signature': prescription.date_signature.isoformat()},
+            status=400
+        )
+
+    try:
+        hash_sig = prescription.signer(request.user)
+    except ValueError as e:
+        return Response({'error': str(e)}, status=400)
+
+    return Response({
+        'message': 'Prescription signée électroniquement',
+        'signature_hash': hash_sig,
+        'signe_par': f"Dr. {request.user.medecin_profile.prenom} {request.user.medecin_profile.nom}",
+        'date_signature': prescription.date_signature.isoformat(),
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def verifier_integrite_prescription(request, prescription_id):
+    """Vérifie l'intégrité d'une prescription signée.
+
+    Recalcule le hash et le compare au hash stocké. Si différent → modifié.
+    """
+    from dossiers_medicaux.models import Prescription
+    prescription = get_object_or_404(Prescription, pk=prescription_id)
+
+    if not prescription.est_signee:
+        return Response({
+            'est_signee': False,
+            'message': 'Prescription non signée'
+        })
+
+    integre = prescription.integrite_verifiee
+    return Response({
+        'est_signee': True,
+        'integrite_verifiee': integre,
+        'signe_par': f"{prescription.signe_par.get_full_name() or prescription.signe_par.username}",
+        'date_signature': prescription.date_signature.isoformat(),
+        'message': 'Intégrité OK' if integre else '⚠️ Prescription modifiée après signature',
+    })
+
+
+# ═══════════════════════════════════════════════════════════════
+# NOUVEAU : Anonymisation RGPD (droit à l'oubli)
+# ═══════════════════════════════════════════════════════════════
+@api_view(['DELETE'])
+@permission_classes([IsAuthenticated])
+def anonymiser_mes_donnees(request):
+    """Droit à l'oubli RGPD — anonymise les données du patient connecté.
+
+    Conformément à l'article 17 du RGPD, le patient peut demander l'effacement
+    de ses données. Cette endpoint :
+    1. Anonymise le Patient (nom, prenom, email, telephone → 'ANONYMISE')
+    2. Révoque le token d'urgence (urgence_qr_actif=False)
+    3. Supprime les DeviceTokens FCM
+    4. Supprime le DossierMedical et ses prescriptions
+    5. Conserve l'ID patient pour traçabilité comptable (anonymisé)
+    6. Journalise l'action dans l'audit trail
+
+    L'action est IRRÉVERSIBLE.
+    """
+    try:
+        patient = Patient.objects.get(user=request.user)
+    except Patient.DoesNotExist:
+        return Response({'error': 'Patient non trouvé'}, status=404)
+
+    # Confirmation par mot de passe (sécurité supplémentaire)
+    password = request.data.get('password')
+    if not password:
+        return Response(
+            {'error': "Mot de passe requis pour confirmer l'anonymisation"},
+            status=400
+        )
+    if not request.user.check_password(password):
+        return Response({'error': 'Mot de passe incorrect'}, status=403)
+
+    # Confirmation explicite (double opt-in)
+    confirmation = request.data.get('confirmation')
+    if confirmation != 'ANONYMISER DEFINITIVEMENT':
+        return Response({
+            'error': 'Confirmation manquante',
+            'hint': 'Inclure {"confirmation": "ANONYMISER DEFINITIVEMENT"} dans le body'
+        }, status=400)
+
+    from dossiers_medicaux.models import DossierMedical, Prescription, Document
+    from datetime import timezone as dt_tz
+
+    # 1. Anonymiser le Patient
+    patient_id_original = patient.patient_id
+    patient.nom = 'ANONYMISE'
+    patient.prenom = 'ANONYMISE'
+    patient.email = f'anonymise_{patient.id}@deleted.local'
+    patient.telephone = '0000000000'
+    patient.adresse = 'ANONYMISE'
+    patient.allergies = ''
+    patient.urgence_qr_actif = False
+    # Token régénéré pour invalider l'ancien
+    patient.regenerer_token_urgence()
+    patient.save()
+
+    # 2. Supprimer DeviceTokens FCM
+    DeviceToken.objects.filter(user=request.user).delete()
+
+    # 3. Supprimer DossierMedical + prescriptions + documents
+    try:
+        dossier = patient.dossiermedical
+        dossier.prescriptions.all().delete()
+        dossier.documents.all().delete()
+        dossier.delete()
+    except DossierMedical.DoesNotExist:
+        pass
+
+    # 4. Désactiver le compte utilisateur (sans le supprimer pour audit)
+    request.user.is_active = False
+    request.user.email = f'anonymise_{patient.id}@deleted.local'
+    request.user.first_name = 'ANONYMISE'
+    request.user.last_name = 'ANONYMISE'
+    request.user.save()
+
+    # 5. Journalisation (audit trail)
+    logger.warning(
+        "RGPD anonymisation patient %s (original: %s) demandée par user %s",
+        patient.id, patient_id_original, request.user.id
+    )
+
+    return Response({
+        'message': 'Données anonymisées conformément au RGPD (art. 17)',
+        'patient_id_anonymise': patient.patient_id,
+        'action': 'irreversible',
+        'timestamp': timezone.now().isoformat(),
+    })
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def exporter_mes_donnees(request):
+    """Droit à la portabilité RGPD (art. 20) — export JSON de toutes les données patient.
+
+    Le patient peut récupérer ses données dans un format structuré et lisible
+    par machine pour les transférer à un autre prestataire de santé.
+    """
+    try:
+        patient = Patient.objects.get(user=request.user)
+    except Patient.DoesNotExist:
+        return Response({'error': 'Patient non trouvé'}, status=404)
+
+    from dossiers_medicaux.models import DossierMedical
+    data = {
+        'patient': {
+            'nom': patient.nom,
+            'prenom': patient.prenom,
+            'email': patient.email,
+            'telephone': patient.telephone,
+            'date_naissance': patient.date_naissance.isoformat(),
+            'adresse': patient.adresse,
+            'groupe_sanguin': patient.groupe_sanguin,
+            'allergies': patient.allergies,
+            'poids': patient.poids,
+            'taille': patient.taille,
+            'patient_id': patient.patient_id,
+            'date_inscription': patient.date_inscription.isoformat(),
+        },
+        'hopital': {
+            'nom': patient.hopital.nom if patient.hopital else None,
+            'ville': patient.hopital.ville if patient.hopital else None,
+        },
+        'consultations': [],
+        'analyses': [],
+        'prescriptions': [],
+        'rdv': [],
+        'factures': [],
+    }
+
+    # Consultations
+    for c in Consultation.objects.filter(patient=patient):
+        data['consultations'].append({
+            'date': c.date.isoformat(),
+            'heure': c.heure.isoformat(),
+            'motif': c.motif,
+            'diagnostic': c.diagnostic,
+            'notes': c.notes,
+            'cout': str(c.cout),
+            'statut': c.statut,
+        })
+
+    # Analyses
+    for a in Analyse.objects.filter(patient=patient):
+        data['analyses'].append({
+            'type': a.get_type_analyse_display(),
+            'laboratoire': a.laboratoire,
+            'date': a.date.isoformat(),
+            'resultat': a.resultat,
+            'conclusion': a.conclusion,
+            'statut': a.statut,
+        })
+
+    # Prescriptions
+    try:
+        for p in patient.dossiermedical.prescriptions.all():
+            data['prescriptions'].append({
+                'medicament': p.medicament,
+                'posologie': p.posologie,
+                'duree': p.duree,
+                'date_prescription': p.date_prescription.isoformat(),
+                'est_active': p.est_active,
+                'est_signee': p.est_signee,
+            })
+    except DossierMedical.DoesNotExist:
+        pass
+
+    # RDV
+    for r in RendezVous.objects.filter(patient=patient):
+        data['rdv'].append({
+            'date': r.date.isoformat(),
+            'heure': r.heure.isoformat(),
+            'motif': r.motif,
+            'statut': r.statut,
+            'medecin': f"Dr. {r.medecin.prenom} {r.medecin.nom}",
+        })
+
+    # Factures
+    for f in Facture.objects.filter(patient=patient):
+        data['factures'].append({
+            'facture_id': f.facture_id,
+            'description': f.description,
+            'montant_total': str(f.montant_total),
+            'statut': f.statut,
+            'date_facture': f.date_facture.isoformat(),
+        })
+
+    response = JsonResponse(data, json_dumps_params={'indent': 2, 'ensure_ascii': False})
+    response['Content-Disposition'] = (
+        f'attachment; filename="mes_donnees_{patient.patient_id}.json"'
+    )
+    return response
+
+
+# ═══════════════════════════════════════════════════════════════
+# NOUVEAU : Recherche floue patients (tolérance fautes de frappe)
+# ═══════════════════════════════════════════════════════════════
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def recherche_floue_patients(request):
+    """Recherche floue de patients avec tolérance aux fautes de frappe.
+
+    Utilise la distance de Levenshtein pour trouver des patients dont le nom
+    ou prénom est proche de la requête (ex: "Dupont" → "Dupon", "Dupond").
+
+    Query params:
+    - q : chaîne de recherche (min 2 caractères)
+    - limit : nombre max de résultats (défaut 10, max 50)
+
+    Réservé aux médecins et personnel admin.
+    """
+    # Vérifier que l'user est médecin ou personnel
+    is_medecin = hasattr(request.user, 'medecin_profile')
+    is_personnel = hasattr(request.user, 'personnel')
+    if not is_medecin and not is_personnel:
+        return Response({'error': 'Réservé médecins et personnel'}, status=403)
+
+    query = request.GET.get('q', '').strip().lower()
+    if len(query) < 2:
+        return Response({'error': 'Requête trop courte (min 2 caractères)'}, status=400)
+
+    limit = min(int(request.GET.get('limit', 10)), 50)
+
+    # Filtrer par hôpital si admin_hopital
+    if is_personnel and request.user.personnel.role == 'admin_hopital':
+        hopital = request.user.personnel.hopital
+        patients_qs = Patient.objects.filter(hopital=hopital)
+    else:
+        patients_qs = Patient.objects.all()
+
+    # Étape 1 : recherche icontains rapide (inclut sous-chaîne)
+    matches_exact = patients_qs.filter(
+        Q(nom__icontains=query) | Q(prenom__icontains=query)
+    )[:limit]
+    results = list(matches_exact)
+
+    # Étape 2 : si pas assez de résultats, recherche floue Levenshtein
+    if len(results) < limit:
+        from difflib import SequenceMatcher
+        seuil_similarite = 0.6  # 60% de similarité
+        candidats = patients_qs.exclude(
+            pk__in=[p.pk for p in results]
+        )
+        for p in candidats:
+            if len(results) >= limit:
+                break
+            # Similarité sur nom ET prénom (max des deux)
+            sim_nom = SequenceMatcher(None, query, p.nom.lower()).ratio()
+            sim_prenom = SequenceMatcher(None, query, p.prenom.lower()).ratio()
+            # Aussi sur la concaténation (ex: "jean dupont")
+            nom_complet = f"{p.prenom.lower()} {p.nom.lower()}"
+            sim_complet = SequenceMatcher(None, query, nom_complet).ratio()
+            score = max(sim_nom, sim_prenom, sim_complet)
+            if score >= seuil_similarite:
+                p._score_similarite = round(score, 3)
+                results.append(p)
+        # Trier par score de similarité décroissant
+        results.sort(key=lambda x: getattr(x, '_score_similarite', 1.0), reverse=True)
+
+    return Response({
+        'query': query,
+        'count': len(results),
+        'results': [{
+            'id': p.id,
+            'patient_id': p.patient_id,
+            'nom': p.nom,
+            'prenom': p.prenom,
+            'telephone': p.telephone,
+            'groupe_sanguin': p.groupe_sanguin,
+            'hopital': p.hopital.nom if p.hopital else None,
+            'score': getattr(p, '_score_similarite', 1.0),
+        } for p in results[:limit]]
+    })

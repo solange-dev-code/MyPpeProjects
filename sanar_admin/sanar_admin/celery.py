@@ -17,6 +17,10 @@ app = Celery('sanar_admin')
 app.config_from_object('django.conf:settings', namespace='CELERY')
 app.autodiscover_tasks()
 
+# Chargement du beat schedule (planning des tâches automatisées)
+# Le module celery_beat_schedule.py configure app.conf.beat_schedule directement
+from . import celery_beat_schedule  # noqa: E402,F401
+
 
 @app.task(bind=True)
 def debug_task(self):

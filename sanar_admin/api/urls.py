@@ -80,4 +80,19 @@ urlpatterns = [
     # ═══ NOUVEAU : Téléconsultation (WebRTC) ═══
     path('teleconsultation/', include('teleconsultation.urls')),
     path('ml/', include('ml_predictions.urls')),
+
+    # ═══ NOUVEAU : Signature électronique prescriptions ═══
+    path('prescriptions/<int:prescription_id>/signer/',
+         views.signer_prescription, name='signer_prescription'),
+    path('prescriptions/<int:prescription_id>/verifier/',
+         views.verifier_integrite_prescription, name='verifier_prescription'),
+
+    # ═══ NOUVEAU : RGPD — anonymisation + portabilité ═══
+    path('rgpd/anonymiser/', views.anonymiser_mes_donnees, name='rgpd_anonymiser'),
+    path('rgpd/exporter-mes-donnees/', views.exporter_mes_donnees,
+         name='rgpd_exporter'),
+
+    # ═══ NOUVEAU : Recherche floue patients ═══
+    path('patients/recherche-floue/', views.recherche_floue_patients,
+         name='recherche_floue_patients'),
 ]
