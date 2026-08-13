@@ -10,6 +10,9 @@ import '../consultation/consultation_page.dart';
 import '../messages/messages_page.dart';
 import '../profile/profile_page.dart';
 import '../assistant/assistant_page.dart';
+import '../urgence/urgence_page.dart';
+import '../file_attente/file_attente_page.dart';
+import '../qr_medical/qr_medical_page.dart';
 import '../../shared/services/api_service.dart';
 
 class HomePage extends StatefulWidget {
@@ -414,6 +417,41 @@ class _HomePageState extends State<HomePage> {
                   ),
 
                   const SizedBox(height: 20),
+
+                  // ─── NOUVEAU : raccourcis urgences ───
+                  Row(
+                    children: [
+                      Expanded(
+                        child: _buildQuickCard(
+                          icon: Icons.qr_code,
+                          label: 'QR Médical',
+                          color: const Color(0xFF16A34A),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const QrMedicalPage(),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: _buildQuickCard(
+                          icon: Icons.list_alt,
+                          label: 'File attente',
+                          color: const Color(0xFFD97706),
+                          onTap: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const FileAttentePage(),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 20),
                 ],
               ),
             ),
@@ -421,6 +459,30 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
 
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButton: Container(
+        height: 68,
+        width: 68,
+        margin: const EdgeInsets.only(top: 32),
+        child: FittedBox(
+          child: FloatingActionButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const UrgencePage()),
+            ),
+            backgroundColor: Colors.red,
+            foregroundColor: Colors.white,
+            elevation: 8,
+            child: const Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.sos, size: 28),
+                Text('SOS', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          ),
+        ),
+      ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppColors.primary,

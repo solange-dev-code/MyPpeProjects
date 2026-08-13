@@ -2,7 +2,9 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
-from hopitaux.models import Hopital  # ← nouvel import
+from hopitaux.models import Hopital
+import uuid
+
 
 class Patient(models.Model):
     GROUPE_SANGUIN_CHOICES = [
@@ -26,7 +28,7 @@ class Patient(models.Model):
     patient_id = models.CharField(max_length=20, unique=True)
     date_inscription = models.DateTimeField(auto_now_add=True)
     est_critique = models.BooleanField(default=False)
-    hopital = models.ForeignKey(               # ← nouveau champ
+    hopital = models.ForeignKey(
         Hopital,
         on_delete=models.SET_NULL,
         null=True,
@@ -34,12 +36,34 @@ class Patient(models.Model):
         related_name='patients'
     )
 
+    # ── NOUVEAU : Token d'urgence pour QR code médical ──
+    # UUID opaque encodé dans le QR code, permettant l'accès d'urgence au
+    # dossier médical RESTREINT (groupe sanguin, allergies, médecin référent)
+    # via l'endpoint public /api/urgence/<token>/ — voir app 'urgences'.
+    # Le patient peut le révoquer / régénérer depuis son profil.
+    token_urgence = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True, db_index=True,
+        help_text="Token opaque pour l'accès d'urgence par QR code"
+    )
+    urgence_qr_actif = models.BooleanField(
+        default=True,
+        help_text="Si False, l'endpoint d'urgence refuse l'accès (révocation)"
+    )
+
     def __str__(self):
         return f"{self.prenom} {self.nom}"
+
+    def regenerer_token_urgence(self):
+        """Révoque l'ancien token et en génère un nouveau (en cas de fuite)."""
+        import uuid as _uuid
+        self.token_urgence = _uuid.uuid4()
+        self.save()
+        return self.token_urgence
 
     class Meta:
         verbose_name = 'Patient'
         ordering = ['-date_inscription']
+
 
 @receiver(post_save, sender=Patient)
 def creer_dossier_medical(sender, instance, created, **kwargs):

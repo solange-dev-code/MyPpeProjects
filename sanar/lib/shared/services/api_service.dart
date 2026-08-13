@@ -249,4 +249,95 @@ class ApiService {
     );
     return response.data;
   }
+
+  // ==================== NOUVEAU : Helpers génériques ====================
+
+  /// GET générique pour les nouveaux endpoints (urgences, file_attente, etc.)
+  static Future<Map<String, dynamic>> dioGet(String path) async {
+    final response = await _dio.get(path, options: await _authOptions);
+    return response.data;
+  }
+
+  /// POST générique pour les nouveaux endpoints
+  static Future<Map<String, dynamic>> dioPost(
+    String path,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _dio.post(path, data: data, options: await _authOptions);
+    return response.data;
+  }
+
+  // ==================== URGENCES ====================
+
+  static Future<Map<String, dynamic>> triggerUrgence({
+    required String niveau,
+    required double latitude,
+    required double longitude,
+    String description = '',
+  }) async {
+    final response = await _dio.post(
+      '/urgences/',
+      data: {
+        'niveau': niveau,
+        'latitude': latitude,
+        'longitude': longitude,
+        'description': description,
+      },
+      options: await _authOptions,
+    );
+    return response.data;
+  }
+
+  // ==================== FILE D'ATTENTE ====================
+
+  static Future<Map<String, dynamic>> getFileAttentePosition() async {
+    return dioGet('/file-attente/ma-position/');
+  }
+
+  // ==================== CRÉNEAUX MÉDECIN ====================
+
+  static Future<List<dynamic>> getCreneauxMedecin(
+    int medecinId,
+    String date,
+  ) async {
+    final response = await _dio.get(
+      '/medecins/$medecinId/creneaux/',
+      queryParameters: {'date': date},
+      options: await _authOptions,
+    );
+    return response.data;
+  }
+
+  // ==================== EXPORTS ====================
+
+  static Future<String> exportDossierPdf() async {
+    final response = await _dio.get(
+      '/exports/dossier-pdf/',
+      options: (await _authOptions).copyWith(
+        responseType: ResponseType.bytes,
+      ),
+    );
+    // Pour téléchargement : utiliser un fichier ou Platform channel
+    return response.data.toString();
+  }
+
+  // ==================== DEVICE TOKEN (FCM) ====================
+
+  static Future<void> registerDeviceToken(
+    String token,
+    String platform,
+  ) async {
+    await _dio.post(
+      '/device-token/',
+      data: {'token': token, 'platform': platform},
+      options: await _authOptions,
+    );
+  }
+
+  static Future<void> unregisterDeviceToken(String token) async {
+    await _dio.delete(
+      '/device-token/$token/',
+      options: await _authOptions,
+    );
+  }
 }

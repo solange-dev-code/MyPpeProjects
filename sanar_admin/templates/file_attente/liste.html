@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}File d'attente — Sanar{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="h3 mb-0">
+      <i class="bi bi-list-ol text-primary"></i>
+      File d'attente
+      {% if hopital %}<small class="text-muted">— {{ hopital }}</small>{% endif %}
+    </h1>
+    <div class="btn-group">
+      <a href="{% url 'file_attente:recalculer' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-clockwise"></i> Recalculer
+      </a>
+      <button class="btn btn-outline-primary btn-sm" onclick="location.reload()">
+        <i class="bi bi-arrow-repeat"></i> Rafraîchir
+      </button>
+    </div>
+  </div>
+
+  {# KPI cards #}
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="card border-primary">
+        <div class="card-body">
+          <div class="text-primary fs-1 fw-bold">{{ total_en_attente }}</div>
+          <div class="text-muted small">En attente</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-danger">
+        <div class="card-body">
+          <div class="text-danger fs-1 fw-bold">{{ p1_count }}</div>
+          <div class="text-muted small">P1 critiques</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-warning">
+        <div class="card-body">
+          <div class="text-warning fs-1 fw-bold">{{ p2_count }}</div>
+          <div class="text-muted small">P2 urgents</div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card border-success">
+        <div class="card-body">
+          <div class="text-success fs-1 fw-bold">{{ en_consultation|length }}</div>
+          <div class="text-muted small">En consultation</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# En consultation #}
+  {% if en_consultation %}
+  <div class="card mb-4 border-success">
+    <div class="card-header bg-success text-white">
+      <i class="bi bi-stethoscope"></i> En consultation actuellement
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <thead>
+            <tr>
+              <th>Patient</th><th>Médecin</th><th>Depuis</th><th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in en_consultation %}
+            <tr>
+              <td>{{ f.patient.prenom }} {{ f.patient.nom }}</td>
+              <td>{{ f.medecin|default:"—" }}</td>
+              <td>{{ f.consultation_at|timesince }}</td>
+              <td>
+                <a href="{% url 'file_attente:action' f.id 'terminer' %}"
+                   class="btn btn-sm btn-success">
+                  <i class="bi bi-check"></i> Terminer
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# File d'attente triée #}
+  <div class="card">
+    <div class="card-header">
+      <i class="bi bi-hourglass-split"></i> File d'attente ({{ files|length }})
+    </div>
+    <div class="card-body">
+      {% if files %}
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th style="width: 80px;">Position</th>
+              <th>Niveau</th>
+              <th>Patient</th>
+              <th>Motif</th>
+              <th>Arrivée</th>
+              <th>Temps estimé</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for f in files %}
+            <tr class="
+              {% if f.niveau_triage == 1 %}table-danger
+              {% elif f.niveau_triage == 2 %}table-warning
+              {% endif %}
+            ">
+              <td>
+                <span class="badge bg-{% if forloop.counter <= 3 %}primary{% else %}secondary{% endif %} fs-6">
+                  #{{ forloop.counter }}
+                </span>
+              </td>
+              <td>
+                <span class="badge bg-{% if f.niveau_triage == 1 %}danger{% elif f.niveau_triage == 2 %}warning{% elif f.niveau_triage == 3 %}info{% else %}secondary{% endif %}">
+                  P{{ f.niveau_triage }}
+                </span>
+              </td>
+              <td>{{ f.patient.prenom }} {{ f.patient.nom }}</td>
+              <td>{{ f.motif|default:"—" }}</td>
+              <td>{{ f.arrivee_at|timesince }}</td>
+              <td><strong>~{{ f.temps_attente_estime }} min</strong></td>
+              <td>
+                <a href="{% url 'file_attente:action' f.id 'consulter' %}"
+                   class="btn btn-sm btn-primary">
+                  <i class="bi bi-arrow-right-circle"></i> Appeler
+                </a>
+                <a href="{% url 'file_attente:action' f.id 'abandonner' %}"
+                   class="btn btn-sm btn-outline-danger"
+                   onclick="return confirm('Marquer comme abandonné ?')">
+                  <i class="bi bi-x"></i>
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="text-center py-5 text-muted">
+        <i class="bi bi-check-circle fs-1"></i>
+        <p class="mt-2">File d'attente vide</p>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# Auto-refresh toutes les 30 secondes #}
+<script>
+  setTimeout(function() { location.reload(); }, 30000);
+</script>
+{% endblock %}

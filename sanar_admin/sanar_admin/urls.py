@@ -1,19 +1,4 @@
-"""
-URL configuration for sanar_admin project.
-
-The `urlpatterns` list routes URLs to views. For more information please see:
-    https://docs.djangoproject.com/en/5.2/topics/http/urls/
-Examples:
-Function views
-    1. Add an import:  from my_app import views
-    2. Add a URL to urlpatterns:  path('', views.home, name='home')
-Class-based views
-    1. Add an import:  from other_app.views import Home
-    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
-Including another URLconf
-    1. Import the include() function: from django.urls import include, path
-    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
-"""
+"""URL configuration for sanar_admin project."""
 from django.contrib import admin
 from django.urls import path, include
 from django.contrib.auth import views as auth_views
@@ -23,8 +8,12 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+
+    # Auth
     path('login/', auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
     path('logout/', auth_views.LogoutView.as_view(), name='logout'),
+
+    # Apps existantes
     path('', include('dashboard.urls')),
     path('patients/', include('patients.urls')),
     path('consultations/', include('consultations.urls')),
@@ -36,7 +25,13 @@ urlpatterns = [
     path('users/', include('users_app.urls')),
     path('calendrier/', include('calendrier.urls')),
     path('medecins/', include('medecins.urls')),
-    path('api/', include('api.urls')),
     path('hopitaux/', include('hopitaux.urls')),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
+    # ═══ NOUVEAU : Apps ajoutées (améliorations) ═══
+    path('urgences/', include('urgences.urls')),
+    path('file-attente/', include('file_attente.urls')),
+    path('exports/', include('exports.urls')),
+
+    # API REST (Flutter)
+    path('api/', include('api.urls')),
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

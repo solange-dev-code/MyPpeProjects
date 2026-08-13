@@ -36,6 +36,11 @@ dependencies:
   cupertino_icons: ^1.0.8
   dio: ^5.9.2
   shared_preferences: ^2.5.5
+  # ─── NOUVEAU : packages pour les fonctionnalités d'urgence ───
+  geolocator: ^13.0.1          # GPS pour bouton SOS
+  qr_flutter: ^4.1.0           # Génération QR code médical
+  url_launcher: ^6.3.0         # Appel téléphonique (tap sur numéro hôpital)
+  firebase_messaging: ^15.0.4  # Notifications push FCM
 
 dev_dependencies:
   flutter_test:

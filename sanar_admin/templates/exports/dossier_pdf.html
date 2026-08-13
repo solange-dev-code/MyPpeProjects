@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Dossier médical — {{ patient.prenom }} {{ patient.nom }}</title>
+<style>
+  @page {
+    size: A4;
+    margin: 2cm 1.5cm;
+    @bottom-center {
+      content: "Page " counter(page) " / " counter(pages);
+      font-size: 9pt;
+      color: #747b7e;
+    }
+    @top-right {
+      content: "Dossier {{ patient.patient_id }}";
+      font-size: 9pt;
+      color: #747b7e;
+    }
+  }
+  body {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    font-size: 10pt;
+    color: #131515;
+    line-height: 1.5;
+  }
+  h1 {
+    font-size: 18pt;
+    color: #1f6c92;
+    border-bottom: 2px solid #1f6c92;
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+  }
+  h2 {
+    font-size: 13pt;
+    color: #32454e;
+    margin-top: 24px;
+    margin-bottom: 8px;
+    border-left: 4px solid #1f6c92;
+    padding-left: 10px;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 8px 0;
+  }
+  th, td {
+    border: 1px solid #acbdc5;
+    padding: 6px 8px;
+    text-align: left;
+    font-size: 9pt;
+  }
+  th {
+    background: #32454e;
+    color: white;
+  }
+  tr:nth-child(even) {
+    background: #f4f5f5;
+  }
+  .info-block {
+    background: #f4f5f5;
+    padding: 12px 16px;
+    border-left: 4px solid #1f6c92;
+    margin: 8px 0;
+  }
+  .alert {
+    background: #fee2e2;
+    border-left: 4px solid #a25b54;
+    padding: 8px 12px;
+    margin: 8px 0;
+  }
+  .footer {
+    margin-top: 40px;
+    padding-top: 10px;
+    border-top: 1px solid #acbdc5;
+    font-size: 8pt;
+    color: #747b7e;
+    text-align: center;
+  }
+  .badge-critique {
+    background: #a25b54;
+    color: white;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 8pt;
+  }
+</style>
+</head>
+<body>
+
+<h1>Dossier médical</h1>
+
+<div class="info-block">
+  <strong>{{ patient.prenom }} {{ patient.nom }}</strong><br>
+  Patient ID : {{ patient.patient_id }}<br>
+  Né(e) le : {{ patient.date_naissance|date:"d/m/Y" }}<br>
+  Groupe sanguin : <strong>{{ patient.groupe_sanguin }}</strong><br>
+  Téléphone : {{ patient.telephone }}<br>
+  Adresse : {{ patient.adresse }}<br>
+  Hôpital de rattachement : {{ patient.hopital|default:"—" }}
+</div>
+
+{% if patient.allergies and patient.allergies != "Aucune" %}
+<div class="alert">
+  <strong>⚠ Allergies :</strong> {{ patient.allergies }}
+</div>
+{% endif %}
+
+<h2>Antécédents médicaux</h2>
+<p>{{ dossier.antecedents|default:"Aucun antécédent enregistré"|linebreaksbr }}</p>
+
+<h2>Traitements en cours</h2>
+<p>{{ dossier.traitements_en_cours|default:"Aucun traitement en cours"|linebreaksbr }}</p>
+
+<h2>Notes médicales</h2>
+<p>{{ dossier.notes_medicales|default:"Aucune note"|linebreaksbr }}</p>
+
+<h2>Prescriptions actives</h2>
+{% if prescriptions %}
+<table>
+  <thead>
+    <tr>
+      <th>Médicament</th>
+      <th>Posologie</th>
+      <th>Durée</th>
+      <th>Date</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for presc in prescriptions %}
+    {% if presc.est_active %}
+    <tr>
+      <td>{{ presc.medicament }}</td>
+      <td>{{ presc.posologie }}</td>
+      <td>{{ presc.duree }}</td>
+      <td>{{ presc.date_prescription|date:"d/m/Y" }}</td>
+    </tr>
+    {% endif %}
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Aucune prescription active.</p>
+{% endif %}
+
+<h2>Historique des consultations</h2>
+{% if consultations %}
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Médecin</th>
+      <th>Motif</th>
+      <th>Diagnostic</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for c in consultations %}
+    <tr>
+      <td>{{ c.date|date:"d/m/Y" }}</td>
+      <td>Dr. {{ c.medecin.prenom }} {{ c.medecin.nom }}</td>
+      <td>{{ c.motif }}</td>
+      <td>{{ c.diagnostic|default:"—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Aucune consultation enregistrée.</p>
+{% endif %}
+
+<h2>Résultats d'analyses</h2>
+{% if analyses %}
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Type</th>
+      <th>Statut</th>
+      <th>Conclusion</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in analyses %}
+    <tr>
+      <td>{{ a.date|date:"d/m/Y" }}</td>
+      <td>{{ a.get_type_analyse_display }}</td>
+      <td>
+        {% if a.est_critique %}
+          <span class="badge-critique">CRITIQUE</span>
+        {% else %}
+          {{ a.get_statut_display }}
+        {% endif %}
+      </td>
+      <td>{{ a.conclusion|default:"—" }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Aucune analyse enregistrée.</p>
+{% endif %}
+
+<h2>Factures</h2>
+{% if factures %}
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Date</th>
+      <th>Montant</th>
+      <th>Statut</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for f in factures %}
+    <tr>
+      <td>{{ f.facture_id }}</td>
+      <td>{{ f.date_facture|date:"d/m/Y" }}</td>
+      <td>{{ f.montant_total }} FCFA</td>
+      <td>{{ f.get_statut_display }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% else %}
+<p>Aucune facture enregistrée.</p>
+{% endif %}
+
+<div class="footer">
+  Document généré le {{ date_edition|date:"d/m/Y à H:i" }} par Sanar<br>
+  Ce document est strictement confidentiel — RGPD — Ne pas diffuser
+</div>
+
+</body>
+</html>

@@ -1,137 +1,331 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Dashboard{% endblock %}
+{% block title %}Tableau de bord — Sanar{% endblock %}
 
-{% block content %}
-<div class="page-header">
-    <div>
-        <div class="page-title">Dashboard</div>
-        <div class="page-subtitle">Bienvenue ! Voici ce qui se passe aujourd'hui.</div>
-    </div>
-    <div class="d-flex gap-2">
-        <a href="#" class="btn-primary-sanar">
-            <i class="bi bi-plus-lg"></i> Nouveau
-        </a>
-        <button class="btn btn-outline-secondary btn-sm">
-            <i class="bi bi-download"></i>
-        </button>
-    </div>
-</div>
-
-<!-- STATS -->
-<div class="row g-3 mb-4">
-    <div class="col-md-3">
-        <div class="stat-card blue">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="stat-label">Patients enregistrés</div>
-                    <div class="stat-value">{{ total_patients }}</div>
-                    <div class="stat-change">↑ + cette semaine</div>
-                </div>
-                <i class="bi bi-people stat-icon"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card green">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="stat-label">Rendez-vous du jour</div>
-                    <div class="stat-value">{{ rdv_jour }}</div>
-                    <div class="stat-change" style="color:#64748b;">Planifiés aujourd'hui</div>
-                </div>
-                <i class="bi bi-calendar-check stat-icon"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card orange">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="stat-label">Analyses en cours</div>
-                    <div class="stat-value">{{ analyses_cours }}</div>
-                    <div class="stat-change" style="color:#64748b;">En attente de résultats</div>
-                </div>
-                <i class="bi bi-graph-up stat-icon"></i>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="stat-card red">
-            <div class="d-flex justify-content-between align-items-start">
-                <div>
-                    <div class="stat-label">Patients critiques</div>
-                    <div class="stat-value">{{ patients_critiques }}</div>
-                    <div class="stat-change">↑ +2 cette semaine</div>
-                </div>
-                <i class="bi bi-exclamation-triangle stat-icon"></i>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- CHARTS + ACTIVITIES -->
-<!-- Activités Médicales Récentes -->
-<div class="col-md-5">
-    <div class="chart-card h-100">
-        <h6 class="fw-bold mb-3" style="color:#1e293b;">
-            Activités Médicales Récentes
-        </h6>
-        {% for activite in activites %}
-        <div class="activity-item">
-            <div class="activity-icon">
-                <i class="bi {{ activite.icone }}"></i>
-            </div>
-            <div>
-                <div style="font-size:14px;font-weight:600;color:#1e293b;">
-                    {{ activite.texte }}
-                </div>
-                <div style="font-size:12px;color:#94a3b8;">
-                    {{ activite.temps|timesince }} ago
-                </div>
-            </div>
-        </div>
-        {% empty %}
-        <div class="text-center text-muted py-3">
-            <i class="bi bi-inbox" style="font-size:24px;"></i>
-            <div class="mt-2" style="font-size:13px;">Aucune activité récente</div>
-        </div>
-        {% endfor %}
-    </div>
-</div>
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 {% endblock %}
 
-{% block extra_js %}
+{% block content %}
+<div class="container-fluid py-4">
+
+  {# ─── KPI Cards ─── #}
+  <div class="row g-3 mb-4">
+    <div class="col-md-2">
+      <div class="card border-primary h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="text-muted small">Patients</div>
+              <div class="fs-3 fw-bold text-primary">{{ total_patients }}</div>
+              <div class="small text-success">+{{ patients_30j }} ce mois</div>
+            </div>
+            <i class="bi bi-people text-primary opacity-50 fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-info h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="text-muted small">RDV du jour</div>
+              <div class="fs-3 fw-bold text-info">{{ rdv_jour }}</div>
+              <div class="small text-muted">Aujourd'hui</div>
+            </div>
+            <i class="bi bi-calendar-check text-info opacity-50 fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-warning h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="text-muted small">Analyses en cours</div>
+              <div class="fs-3 fw-bold text-warning">{{ analyses_cours }}</div>
+              <div class="small text-muted">En attente</div>
+            </div>
+            <i class="bi bi-hourglass-split text-warning opacity-50 fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-danger h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="text-muted small">Patients critiques</div>
+              <div class="fs-3 fw-bold text-danger">{{ patients_critiques }}</div>
+              <div class="small text-muted">À surveiller</div>
+            </div>
+            <i class="bi bi-heart-pulse text-danger opacity-50 fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card border-secondary h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="text-muted small">Urgences</div>
+              <div class="fs-3 fw-bold">{{ urgences_en_cours }}</div>
+              <div class="small text-muted">En cours</div>
+            </div>
+            <i class="bi bi-exclamation-triangle text-secondary opacity-50 fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% if ca_mensuel is not None %}
+    <div class="col-md-2">
+      <div class="card border-success h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <div class="text-muted small">CA 30 jours</div>
+              <div class="fs-3 fw-bold text-success">{{ ca_mensuel|floatformat:0 }}</div>
+              <div class="small text-muted">FCFA</div>
+            </div>
+            <i class="bi bi-cash-coin text-success opacity-50 fs-3"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="col-md-2">
+      <div class="card border-light h-100">
+        <div class="card-body">
+          <a href="{% url 'file_attente:liste' %}" class="text-decoration-none">
+            <div class="text-muted small">File d'attente</div>
+            <div class="fs-3 fw-bold">{{ file_attente|length }}</div>
+            <div class="small text-muted">En attente →</div>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  {# ─── Charts row 1 ─── #}
+  <div class="row g-3 mb-4">
+    <div class="col-md-8">
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="bi bi-graph-up"></i> Évolution des inscriptions (12 mois)
+        </div>
+        <div class="card-body">
+          <canvas id="chartEvolution" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="bi bi-pie-chart"></i> Répartition statuts RDV
+        </div>
+        <div class="card-body">
+          <canvas id="chartStatuts" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ─── Charts row 2 ─── #}
+  <div class="row g-3 mb-4">
+    <div class="col-md-6">
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="bi bi-bar-chart"></i> RDV 7 derniers jours
+        </div>
+        <div class="card-body">
+          <canvas id="chartRdv" height="100"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card h-100 border-danger">
+        <div class="card-header bg-danger text-white">
+          <i class="bi bi-exclamation-octagon"></i> Analyses critiques non traitées
+          ({{ analyses_critiques|length }})
+        </div>
+        <div class="card-body">
+          {% if analyses_critiques %}
+          <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
+            <table class="table table-sm table-hover">
+              <thead>
+                <tr>
+                  <th>Patient</th>
+                  <th>Type</th>
+                  <th>Date</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for a in analyses_critiques %}
+                <tr class="table-danger">
+                  <td>{{ a.patient.prenom }} {{ a.patient.nom }}</td>
+                  <td>{{ a.get_type_analyse_display }}</td>
+                  <td>{{ a.date|date:"d/m/Y" }}</td>
+                  <td>
+                    <a href="{% url 'analyses:detail' a.id %}" class="btn btn-sm btn-outline-danger">
+                      <i class="bi bi-eye"></i>
+                    </a>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center text-muted py-4">
+            <i class="bi bi-check-circle fs-2"></i>
+            <p class="mt-2">Aucune analyse critique en attente</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ─── Quick actions ─── #}
+  <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <a href="{% url 'urgences:liste' %}" class="card text-decoration-none h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-exclamation-triangle text-danger fs-1"></i>
+          <div class="mt-2">Urgences</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{% url 'file_attente:liste' %}" class="card text-decoration-none h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-list-ol text-primary fs-1"></i>
+          <div class="mt-2">File d'attente</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{% url 'analyses:liste' %}" class="card text-decoration-none h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-clipboard2-pulse text-warning fs-1"></i>
+          <div class="mt-2">Analyses</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-3">
+      <a href="{% url 'dossiers_medicaux:liste' %}" class="card text-decoration-none h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-folder2-open text-success fs-1"></i>
+          <div class="mt-2">Dossiers</div>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  {# ─── Activités récentes ─── #}
+  <div class="card">
+    <div class="card-header">
+      <i class="bi bi-clock-history"></i> Activités récentes
+    </div>
+    <div class="card-body">
+      {% for a in activites %}
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi {{ a.icone }} text-primary me-3"></i>
+        <div class="flex-grow-1">{{ a.texte }}</div>
+        <small class="text-muted">{{ a.temps|timesince }} ago</small>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>
+
 <script>
-const ctx = document.getElementById('consultationsChart').getContext('2d');
-new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
-        datasets: [{
-            label: 'Consultations',
-            data: [100, 150, 120, 180, 140, 200],
-            borderColor: '#2563EB',
-            backgroundColor: 'rgba(37, 99, 235, 0.08)',
-            borderWidth: 2,
-            fill: true,
-            tension: 0.4,
-            pointBackgroundColor: '#2563EB',
-            pointRadius: 4,
-        }]
+// ─── Chart.js : Évolution des patients ───
+const ctxEvo = document.getElementById('chartEvolution').getContext('2d');
+new Chart(ctxEvo, {
+  type: 'line',
+  data: {
+    labels: {{ evolution_labels|safe|default:'[]' }},
+    datasets: [{
+      label: 'Nouveaux patients',
+      data: {{ evolution_data|safe|default:'[]' }},
+      borderColor: '#1f6c92',
+      backgroundColor: 'rgba(31, 108, 146, 0.1)',
+      tension: 0.3,
+      fill: true,
+      pointBackgroundColor: '#1f6c92',
+      pointRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false }
     },
-    options: {
-        responsive: true,
-        plugins: { legend: { display: false } },
-        scales: {
-            y: {
-                beginAtZero: false,
-                min: 100,
-                grid: { color: '#f1f5f9' }
-            },
-            x: { grid: { display: false } }
-        }
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }
     }
+  }
 });
+
+// ─── Chart.js : Répartition statuts RDV (donut) ───
+const ctxStatut = document.getElementById('chartStatuts').getContext('2d');
+const statutLabels = {{ statut_labels|safe|default:'[]' }};
+const statutLabelsFr = statutLabels.map(s => {
+  const map = {'en_attente':'En attente','confirme':'Confirmé','reporte':'Reporté',
+               'annule':'Annulé','termine':'Terminé'};
+  return map[s] || s;
+});
+new Chart(ctxStatut, {
+  type: 'doughnut',
+  data: {
+    labels: statutLabelsFr,
+    datasets: [{
+      data: {{ statut_data|safe|default:'[]' }},
+      backgroundColor: ['#ffc107', '#198754', '#0dcaf0', '#dc3545', '#6c757d'],
+      borderWidth: 2,
+      borderColor: '#fff'
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom' }
+    }
+  }
+});
+
+// ─── Chart.js : RDV 7 jours ───
+const ctxRdv = document.getElementById('chartRdv').getContext('2d');
+new Chart(ctxRdv, {
+  type: 'bar',
+  data: {
+    labels: {{ rdv_labels|safe|default:'[]' }},
+    datasets: [{
+      label: 'RDV',
+      data: {{ rdv_data|safe|default:'[]' }},
+      backgroundColor: '#1f6c92',
+      borderRadius: 4
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: false } },
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }
+    }
+  }
+});
+
+// ─── Auto-refresh toutes les 60 secondes ───
+setTimeout(() => location.reload(), 60000);
 </script>
 {% endblock %}

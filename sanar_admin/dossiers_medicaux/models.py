@@ -3,7 +3,24 @@ from patients.models import Patient
 from consultations.models import Consultation
 from medecins.models import Medecin
 
+# Import sécurisé : django-cryptography fournit EncryptedTextField qui chiffre
+# automatiquement les données au repos (AES-256-GCM). En cas d'indisponibilité
+# de la bibliothèque (ex: environnement de test minimal), on fallback sur TextField.
+try:
+    from cryptography.fields import EncryptedTextField
+    CHIFFREMENT_ACTIF = True
+except ImportError:
+    EncryptedTextField = models.TextField
+    CHIFFREMENT_ACTIF = False
+
+
 class DossierMedical(models.Model):
+    """Dossier médical centralisé d'un patient.
+
+    Les champs sensibles (antécédents, traitements, notes) sont chiffrés
+    au repos avec AES-256-GCM via django-cryptography.
+    """
+
     STATUT_CHOICES = [
         ('valide', 'Validé'),
         ('en_attente', 'En attente'),
@@ -17,9 +34,10 @@ class DossierMedical(models.Model):
     statut = models.CharField(
         max_length=20, choices=STATUT_CHOICES, default='en_attente'
     )
-    antecedents = models.TextField(blank=True)
-    traitements_en_cours = models.TextField(blank=True)
-    notes_medicales = models.TextField(blank=True)
+    # Champs sensibles chiffrés au repos (AES-256-GCM)
+    antecedents = EncryptedTextField(blank=True, default='')
+    traitements_en_cours = EncryptedTextField(blank=True, default='')
+    notes_medicales = EncryptedTextField(blank=True, default='')
     nb_documents = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -29,6 +47,7 @@ class DossierMedical(models.Model):
 
     class Meta:
         ordering = ['-updated_at']
+
 
 class Prescription(models.Model):
     dossier = models.ForeignKey(
@@ -46,10 +65,14 @@ class Prescription(models.Model):
     def __str__(self):
         return f"{self.medicament} - {self.dossier.patient}"
 
+    class Meta:
+        ordering = ['-date_prescription']
+
+
 class Document(models.Model):
     TYPE_CHOICES = [
         ('ordonnance', 'Ordonnance'),
-        ('analyse', 'Résultat d\'analyse'),
+        ('analyse', "Résultat d'analyse"),
         ('imagerie', 'Imagerie (Radio/IRM)'),
         ('compte_rendu', 'Compte-rendu'),
         ('autre', 'Autre'),

@@ -1,30 +1,60 @@
-# Secrets Django
-sanar_admin/.env
-sanar_admin/.env.local
-sanar_admin/.env.neon
-
-# Base de données locale
-sanar_admin/db.sqlite3
-
-# Fichiers uploadés
-sanar_admin/media/
-
-# Python
+# ─── Python / Django ───
 __pycache__/
-*.pyc
-*.pyo
-sanar_admin/env/
-sanar_admin/venv/
+*.py[cod]
+*$py.class
+*.so
+.Python
+db.sqlite3
+db.sqlite3-journal
+media/
+logs/
+*.log
 
-# Flutter
-sanar/build/
-sanar/.dart_tool/
-sanar/.flutter-plugins
-sanar/.flutter-plugins-dependencies
+# ─── Variables d'environnement (NE JAMAIS COMMITTER) ───
+.env
+.env.local
+.env.production
 
-# VS Code
+# ─── Virtual envs ───
+.venv/
+venv/
+env/
+
+# ─── IDE ───
 .vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-# Windows
+# ─── Django static ───
+staticfiles/
+local_settings.py
+
+# ─── Flutter / Dart ───
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# ─── OS ───
+.DS_Store
 Thumbs.db
-desktop.ini
+
+# ─── Coverage ───
+htmlcov/
+.tox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
