@@ -27,7 +27,7 @@ cmds = [
 ]
 
 [start]
-cmd = 'cd sanar_admin && bash start_all.sh'
+cmd = 'cd sanar_admin && bash start_simple.sh'
 
 [variables]
 PYTHONUNBUFFERED = '1'
