@@ -5,7 +5,7 @@
     "buildCommand": "cd sanar_admin && pip install -r requirements-railway.txt && python manage.py collectstatic --noinput"
   },
   "deploy": {
-    "startCommand": "cd sanar_admin && bash start_minimal.sh",
+    "startCommand": "gunicorn --bind 0.0.0.0:$PORT --workers 2 --timeout 120 --access-logfile - --error-logfile - sanar_admin.wsgi:application",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 5
   }

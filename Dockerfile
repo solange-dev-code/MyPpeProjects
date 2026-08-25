@@ -45,5 +45,5 @@ EXPOSE 8080
 # Pas de HEALTHCHECK Docker — Railway gère le healthcheck via railway.json
 # (évite les faux négatifs pendant les migrations au démarrage)
 
-# Démarre gunicorn (mode simple pour Railway)
-CMD ["bash", "/app/start_minimal.sh"]
+# Démarre gunicorn directement (sans script shell)
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "sanar_admin.wsgi:application"]
