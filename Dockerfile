@@ -30,9 +30,9 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # Copie du code backend
 COPY sanar_admin/ /app/
 
-# Scripts de démarrage
-RUN chmod +x /app/start.sh /app/start_all.sh /app/start_worker.sh \
-              /app/start_beat.sh /app/start_daphne.sh 2>/dev/null || true
+# Scripts de démarrage — rendre exécutables
+RUN chmod +x /app/start.sh /app/start_simple.sh /app/start_all.sh \
+              /app/start_worker.sh /app/start_beat.sh /app/start_daphne.sh 2>/dev/null || true
 
 # Préparation des dossiers
 RUN mkdir -p /app/staticfiles /app/media /app/logs
@@ -40,11 +40,11 @@ RUN mkdir -p /app/staticfiles /app/media /app/logs
 # Railway attribue dynamiquement le port via $PORT
 ENV PORT=${PORT:-8080}
 ENV PORT_WS=${PORT_WS:-8001}
-EXPOSE 8080 8001
+EXPOSE 8080
 
 # Healthcheck sur le port principal
-HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=5 \
     CMD curl -f http://localhost:${PORT:-8080}/api/health/ || exit 1
 
-# Démarre tous les services via supervisord
-CMD ["bash", "/app/start_all.sh"]
+# Démarre gunicorn (mode simple pour Railway)
+CMD ["bash", "/app/start_simple.sh"]
