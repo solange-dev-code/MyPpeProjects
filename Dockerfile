@@ -23,8 +23,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copie requirements et installation
-COPY sanar_admin/requirements.txt /app/requirements.txt
+# Copie requirements et installation (version allégée pour Railway)
+COPY sanar_admin/requirements-railway.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Copie du code backend

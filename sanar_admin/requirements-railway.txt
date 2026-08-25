@@ -1,0 +1,69 @@
+# ─── Requirements Railway (allégé pour plan gratuit 500MB RAM) ───
+# Supprime scikit-learn, pandas, scipy (trop lourds pour démo)
+# Conserve toutes les autres fonctionnalités
+
+# Django core
+asgiref==3.11.1
+Django==6.0.6
+django-cors-headers==4.9.0
+djangorestframework==3.17.1
+djangorestframework_simplejwt==5.5.1
+dj-database-url==2.2.0
+pillow==12.3.0
+psycopg2-binary==2.9.12
+PyJWT==2.13.0
+python-dotenv==1.2.2
+sqlparse==0.5.5
+tzdata==2026.2
+gunicorn==23.0.0
+
+# Sécurité
+argon2-cffi==23.1.0
+django-cryptography==1.1
+cryptography==43.0.1
+
+# 2FA TOTP
+django-otp==1.5.4
+qrcode==7.4.2
+
+# Audit trail
+django-auditlog==3.0.0
+
+# Exports PDF/CSV/FHIR
+weasyprint==62.3
+fhir.resources==7.1.0
+reportlab==4.2.5
+
+# Télécommunications
+twilio==9.3.2
+firebase-admin==6.5.0
+requests==2.32.3
+
+# Géolocalisation
+geopy==2.4.1
+
+# Celery + Redis
+celery==5.4.0
+redis==5.0.8
+
+# WebRTC (Django Channels)
+channels==4.1.0
+channels-redis==4.2.0
+daphne==4.1.2
+
+# Documentation API
+drf-spectacular==0.27.2
+
+# Monitoring
+sentry-sdk==2.14.0
+
+# Google Calendar (optionnel)
+google-api-python-client==2.147.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+
+# Rate limiting
+django-ratelimit==4.1.0
+
+# Note : scikit-learn, numpy, pandas retirés pour économiser RAM
+# Le service ML retournera un score "froid" par défaut (cf ml_predictions/services.py)
