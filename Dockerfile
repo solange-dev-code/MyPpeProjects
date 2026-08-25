@@ -42,9 +42,8 @@ ENV PORT=${PORT:-8080}
 ENV PORT_WS=${PORT_WS:-8001}
 EXPOSE 8080
 
-# Healthcheck sur le port principal
-HEALTHCHECK --interval=30s --timeout=10s --start-period=180s --retries=5 \
-    CMD curl -f http://localhost:${PORT:-8080}/api/health/ || exit 1
+# Pas de HEALTHCHECK Docker — Railway gère le healthcheck via railway.json
+# (évite les faux négatifs pendant les migrations au démarrage)
 
 # Démarre gunicorn (mode simple pour Railway)
 CMD ["bash", "/app/start_simple.sh"]
