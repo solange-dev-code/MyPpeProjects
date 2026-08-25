@@ -861,10 +861,15 @@ def health_check(request):
 
     # Redis
     try:
-        r = redis.Redis(
-            host=os.getenv('REDIS_HOST', 'localhost'),
-            port=6379, socket_timeout=2
-        )
+        redis_url = os.getenv('REDIS_URL') or os.getenv('REDIS_PRIVATE_URL')
+        if redis_url:
+            r = redis.Redis.from_url(redis_url, socket_timeout=2)
+        else:
+            r = redis.Redis(
+                host=os.getenv('REDIS_HOST', 'localhost'),
+                port=int(os.getenv('REDIS_PORT', 6379)),
+                socket_timeout=2
+            )
         r.ping()
         status['services']['redis'] = 'ok'
     except Exception as e:

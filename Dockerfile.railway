@@ -1,0 +1,48 @@
+# ─── Dockerfile Railway — backend Django single service ───
+# Build contexte : racine du dépôt (.)
+# Railway fournit automatiquement $PORT, $DATABASE_URL, $REDIS_URL
+
+FROM python:3.12-slim
+
+# Dépendances système pour WeasyPrint, psycopg2, cryptography, Pillow
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    libpango-1.0-0 \
+    libpangoft2-1.0-0 \
+    libcairo2 \
+    libgdk-pixbuf2.0-0 \
+    libffi-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libxml2 \
+    libxslt1-dev \
+    shared-mime-info \
+    fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copie requirements et installation (cache layer)
+COPY sanar_admin/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+# Copie du code backend
+COPY sanar_admin/ /app/
+
+# Script de démarrage
+COPY sanar_admin/start.sh /app/start.sh
+RUN chmod +x /app/start.sh
+
+# Préparation des dossiers
+RUN mkdir -p /app/staticfiles /app/media /app/logs
+
+# Railway attribue dynamiquement le port via $PORT
+ENV PORT=${PORT:-8080}
+EXPOSE 8080
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8080}/api/health/ || exit 1
+
+CMD ["bash", "/app/start.sh"]

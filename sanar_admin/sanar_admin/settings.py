@@ -37,11 +37,20 @@ DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() in ('true', '1', 'yes')
 
 # ──────────────────────────────────────────────────────────────
 # 3. ALLOWED_HOSTS (CRITIQUE) — explicite, plus jamais ['*']
+#    Railway fournit RAILWAY_PUBLIC_DOMAIN, on l'ajoute dynamiquement
 # ──────────────────────────────────────────────────────────────
 ALLOWED_HOSTS = os.getenv(
     'DJANGO_ALLOWED_HOSTS',
     'localhost,127.0.0.1,sanar.app,www.sanar.app'
 ).split(',')
+
+# Railway : ajouter automatiquement le domaine public
+railway_domain = os.getenv('RAILWAY_PUBLIC_DOMAIN')
+if railway_domain:
+    ALLOWED_HOSTS.append(railway_domain)
+    ALLOWED_HOSTS.append(f'.{railway_domain}')
+    ALLOWED_HOSTS.append('.railway.app')
+    ALLOWED_HOSTS.append('0.0.0.0')  # Pour le healthcheck interne
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -118,16 +127,33 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'sanar_admin.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),
-        'USER': os.getenv('DB_USER'),
-        'PASSWORD': os.getenv('DB_PASSWORD'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+# ──────────────────────────────────────────────────────────────
+# Base de données — support Railway (DATABASE_URL) + fallback .env
+# ──────────────────────────────────────────────────────────────
+import dj_database_url
+
+DATABASE_URL = os.getenv('DATABASE_URL')
+# Uniquement utiliser DATABASE_URL si c'est un schéma PostgreSQL
+# (Railway fournit postgres://..., ignorer file:// ou vide)
+if DATABASE_URL and DATABASE_URL.startswith(('postgres://', 'postgresql://', 'postgis://')):
+    DATABASES = {
+        'default': dj_database_url.parse(
+            DATABASE_URL,
+            conn_max_age=600,
+            ssl_require='RAILWAY' in os.environ or 'DYNO' in os.environ,
+        )
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('DB_NAME'),
+            'USER': os.getenv('DB_USER'),
+            'PASSWORD': os.getenv('DB_PASSWORD'),
+            'HOST': os.getenv('DB_HOST', 'localhost'),
+            'PORT': os.getenv('DB_PORT', '5432'),
+        }
+    }
 
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -189,22 +215,26 @@ SPECTACULAR_SETTINGS = {
 
 # ──────────────────────────────────────────────────────────────
 # 11. Django Channels (WebRTC signaling) — phase 3
+#    Support Railway (REDIS_URL) + fallback .env
 # ──────────────────────────────────────────────────────────────
 ASGI_APPLICATION = 'sanar_admin.asgi.application'
+REDIS_URL_CHANNELS = os.getenv('REDIS_URL', os.getenv('REDIS_PRIVATE_URL', 'redis://localhost:6379/4'))
+
 CHANNEL_LAYERS = {
     'default': {
         'BACKEND': 'channels_redis.core.RedisChannelLayer',
         'CONFIG': {
-            'hosts': [(os.getenv('REDIS_HOST', 'localhost'), 6379)],
+            'hosts': [REDIS_URL_CHANNELS],
         },
     },
 }
 
 # ──────────────────────────────────────────────────────────────
 # 12. Celery — tâches asynchrones (phase 3)
+#    Support Railway (REDIS_URL) + fallback .env
 # ──────────────────────────────────────────────────────────────
-CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
-CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', REDIS_URL_CHANNELS)
+CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', REDIS_URL_CHANNELS)
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_SERIALIZER = 'json'
