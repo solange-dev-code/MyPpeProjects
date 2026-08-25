@@ -31,7 +31,7 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 COPY sanar_admin/ /app/
 
 # Scripts de démarrage — rendre exécutables
-RUN chmod +x /app/start.sh /app/start_simple.sh /app/start_all.sh \
+RUN chmod +x /app/start.sh /app/start_minimal.sh /app/start_all.sh \
               /app/start_worker.sh /app/start_beat.sh /app/start_daphne.sh 2>/dev/null || true
 
 # Préparation des dossiers
@@ -46,4 +46,4 @@ EXPOSE 8080
 # (évite les faux négatifs pendant les migrations au démarrage)
 
 # Démarre gunicorn (mode simple pour Railway)
-CMD ["bash", "/app/start_simple.sh"]
+CMD ["bash", "/app/start_minimal.sh"]
