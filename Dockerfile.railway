@@ -1,10 +1,11 @@
-# ─── Dockerfile Railway — backend Django single service ───
+# ─── Dockerfile Railway — backend Django all-in-one ───
 # Build contexte : racine du dépôt (.)
-# Railway fournit automatiquement $PORT, $DATABASE_URL, $REDIS_URL
+# Lance gunicorn + daphne + celery worker + celery beat via supervisord
+# Idéal pour le plan Railway gratuit (1 seul service)
 
 FROM python:3.12-slim
 
-# Dépendances système pour WeasyPrint, psycopg2, cryptography, Pillow
+# Dépendances système pour WeasyPrint, psycopg2, cryptography, Pillow + supervisord
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
@@ -19,30 +20,34 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxslt1-dev \
     shared-mime-info \
     fonts-liberation \
+    supervisor \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copie requirements et installation (cache layer)
+# Copie requirements et installation
 COPY sanar_admin/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
 # Copie du code backend
 COPY sanar_admin/ /app/
 
-# Script de démarrage
-COPY sanar_admin/start.sh /app/start.sh
-RUN chmod +x /app/start.sh
+# Scripts de démarrage
+RUN chmod +x /app/start.sh /app/start_all.sh /app/start_worker.sh \
+              /app/start_beat.sh /app/start_daphne.sh
 
 # Préparation des dossiers
 RUN mkdir -p /app/staticfiles /app/media /app/logs
 
 # Railway attribue dynamiquement le port via $PORT
 ENV PORT=${PORT:-8080}
-EXPOSE 8080
+ENV PORT_WS=${PORT_WS:-8001}
+EXPOSE 8080 8001
 
-# Healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+# Healthcheck sur le port principal
+HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8080}/api/health/ || exit 1
 
-CMD ["bash", "/app/start.sh"]
+# Démarre tous les services via supervisord
+CMD ["bash", "/app/start_all.sh"]

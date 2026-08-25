@@ -1,5 +1,6 @@
 # ─── Nixpacks config pour Railway ───
 # Build optimisé Python 3.12 + deps système pour WeasyPrint
+# Démarre tous les services via supervisord (plan gratuit)
 
 [phases.setup]
 nixPkgs = ['python312', 'postgresql_16.lib', 'openssl', 'libffi', 'fontconfig',
@@ -8,12 +9,13 @@ nixPkgs = ['python312', 'postgresql_16.lib', 'openssl', 'libffi', 'fontconfig',
            'cairo', 'gdk-pixbuf', 'zlib', 'pkg-config']
 
 aptPkgs = ['libpango-1.0-0', 'libpangoft2-1.0-0', 'libcairo2',
-           'libgdk-pixbuf2.0-0', 'shared-mime-info']
+           'libgdk-pixbuf2.0-0', 'shared-mime-info', 'supervisor']
 
 [phases.install]
 cmds = [
     'pip install --upgrade pip',
     'pip install -r sanar_admin/requirements.txt',
+    'pip install supervisor',
 ]
 
 [phases.build]
@@ -22,9 +24,10 @@ cmds = [
 ]
 
 [start]
-cmd = 'cd sanar_admin && bash start.sh'
+cmd = 'cd sanar_admin && bash start_all.sh'
 
 [variables]
 PYTHONUNBUFFERED = '1'
 PYTHONDONTWRITEBYTECODE = '1'
 DJANGO_DEBUG = 'False'
+PORT_WS = '8001'

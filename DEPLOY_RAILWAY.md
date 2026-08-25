@@ -1,127 +1,97 @@
-# Déploiement Railway — Sanar
+# Déploiement Railway — Sanar (all-in-one supervisord)
 
-Ce guide explique comment déployer le projet Sanar sur Railway (plateforme PaaS) pour une démo publique ou un environnement de staging.
+Ce guide explique comment déployer le projet Sanar sur Railway avec **tous les services fonctionnels** (API REST, WebSockets WebRTC, Celery worker, Celery beat) dans un seul conteneur via supervisord.
 
-## Prérequis
-
-1. Compte Railway (gratuit, 5$ de crédit/mois) : https://railway.app
-2. Le dépôt GitHub du projet : https://github.com/solange-dev-code/MyPpeProjects
-3. (Optionnel) Railway CLI installé localement
-
-## Architecture Railway
-
-Railway fournit automatiquement PostgreSQL et Redis managés. Le backend Django est déployé comme service unique via le `nixpacks.toml` ou `Dockerfile.railway`.
+## Architecture Railway (all-in-one)
 
 ```
-┌──────────────────────────────────────────────┐
-│  Railway (https://sanar.up.railway.app)      │
-│                                               │
-│  ┌─────────────────┐   ┌─────────────────┐   │
-│  │  PostgreSQL     │   │  Redis          │   │
-│  │  (Railway DB)   │   │  (Railway Redis) │   │
-│  └────────┬────────┘   └────────┬────────┘   │
-│           │                      │            │
-│           └──────────┬──────────┘            │
-│                      │                       │
-│           ┌──────────▼──────────┐            │
-│           │  Backend Django     │            │
-│           │  (gunicorn 4 workers)│           │
-│           │  - API REST         │            │
-│           │  - Admin            │            │
-│           │  - Healthcheck      │            │
-│           └──────────┬──────────┘            │
-│                      │                       │
-│                  PORT 8080                   │
-│                      ▼                       │
-│      https://sanar.up.railway.app            │
-│                      │                       │
-│           ┌──────────▼──────────┐            │
-│           │  Apps Flutter        │           │
-│           │  (patient + médecin)  │           │
-│           └──────────────────────┘            │
-└───────────────────────────────────────────────┘
+┌─────────────── Railway (.up.railway.app) ───────────────┐
+│                                                          │
+│  ┌──────────────┐   ┌──────────────┐                    │
+│  │ PostgreSQL   │   │    Redis     │  ← Plugins Railway │
+│  │ (Railway DB)  │   │  (Railway)   │    (auto-provision)│
+│  └──────┬───────┘   └───────┬──────┘                    │
+│         └────────┬─────────┘                            │
+│                  ▼                                       │
+│  ┌──────────────────────────────────────────┐            │
+│  │  Conteneur Railway (all-in-one)          │            │
+│  │  supervisord lance 4 processus :         │            │
+│  │                                          │            │
+│  │  ┌─────────────────────────────────────┐ │            │
+│  │  │ 1. gunicorn  ($PORT=8080)          │ │            │
+│  │  │    → API REST + admin Django        │ │            │
+│  │  │    → 38 endpoints JWT authentifiés  │ │            │
+│  │  │    → Swagger UI + ReDoc             │ │            │
+│  │  └─────────────────────────────────────┘ │            │
+│  │  ┌─────────────────────────────────────┐ │            │
+│  │  │ 2. daphne    ($PORT_WS=8001)       │ │            │
+│  │  │    → WebSockets WebRTC             │ │            │
+│  │  │    → Téléconsultation audio/vidéo   │ │            │
+│  │  │    → Chat médecin-patient temps réel│ │            │
+│  │  └─────────────────────────────────────┘ │            │
+│  │  ┌─────────────────────────────────────┐ │            │
+│  │  │ 3. celery worker (concurrency 2)    │ │            │
+│  │  │    → Envoi SMS Twilio               │ │            │
+│  │  │    → Notifications push FCM         │ │            │
+│  │  │    → Génération exports PDF         │ │            │
+│  │  │    → Entraînement modèle ML         │ │            │
+│  │  │    → Notifications urgences         │ │            │
+│  │  └─────────────────────────────────────┘ │            │
+│  │  ┌─────────────────────────────────────┐ │            │
+│  │  │ 4. celery beat (scheduler)         │ │            │
+│  │  │    → Rappels RDV J-1 (daily 18h)   │ │            │
+│  │  │    → Rappels RDV H-2 (hourly)       │ │            │
+│  │  │    → Recalcul file d'attente (5min) │ │            │
+│  │  │    → Re-notif urgences (10min)     │ │            │
+│  │  │    → Nettoyage RGPD (mensuel)      │ │            │
+│  │  │    → ML ré-entraînement (hebdo)    │ │            │
+│  │  └─────────────────────────────────────┘ │            │
+│  └──────────────────────────────────────────┘            │
+│             │                                            │
+│             ▼                                            │
+│   https://sanar-ppe.up.railway.app                      │
+└──────────────────────────────────────────────────────────┘
 ```
 
-## Déploiement étape par étape
+## Déploiement en 3 commandes
 
-### 1. Connecter le dépôt GitHub à Railway
+### 1. Installer Railway CLI et se connecter
 
 ```bash
-# Option A : Via le dashboard Railway
-# 1. Aller sur https://railway.app/new
-# 2. "Deploy from GitHub repo"
-# 3. Sélectionner solange-dev-code/MyPpeProjects
-# 4. Cliquer "Deploy Now"
-
-# Option B : Via Railway CLI
 npm install -g @railway/cli
-railway login
-railway init  # Crée un nouveau projet Railway
-railway link  # Lie le dépôt local au projet Railway
+railway login   # Ouvre le browser pour authentification
 ```
 
-### 2. Ajouter les services PostgreSQL et Redis
-
-Dans le dashboard Railway :
-1. **+ New → Database → PostgreSQL** (Railway provisionne automatiquement)
-2. **+ New → Database → Redis** (Railway provisionne automatiquement)
-3. Railway génère automatiquement les variables `DATABASE_URL` et `REDIS_URL`
-
-### 3. Configurer les variables d'environnement
-
-Dans Railway → Settings → Variables, ajouter :
-
-```env
-DJANGO_SECRET_KEY=<générer via : python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())">
-DJANGO_DEBUG=False
-DJANGO_ENCRYPTION_KEY=<générer via : python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())">
-
-# Super-user auto (optionnel, pour admin)
-DJANGO_SUPERUSER_USERNAME=admin
-DJANGO_SUPERUSER_PASSWORD=AdminSanar2026!
-DJANGO_SUPERUSER_EMAIL=admin@sanar.app
-
-# Seed données démo
-DJANGO_SEED_DEMO=True
-
-# Services externes (optionnels pour démo)
-# TWILIO_ACCOUNT_SID=
-# FCM_SERVER_KEY=
-# SENTRY_DSN=
-```
-
-Railway injecte automatiquement (ne pas définir manuellement) :
-- `PORT` (port HTTP dynamique)
-- `DATABASE_URL` (PostgreSQL Railway)
-- `REDIS_URL` (Redis Railway)
-- `RAILWAY_PUBLIC_DOMAIN` (domaine .railway.app)
-
-### 4. Déclencher le déploiement
+### 2. Lancer le script de déploiement automatisé
 
 ```bash
-# Via CLI
-railway up
-
-# Ou via git push (si Railway webhook configuré)
-git push origin main
-# Railway détecte le push et rebuild automatiquement
+cd /home/z/my-project/repo-analysis/MyPpeProjects
+bash /home/z/my-project/scripts/railway_deploy.sh
 ```
 
-### 5. Vérifier le déploiement
+Le script effectue automatiquement :
+- Création du projet Railway `Sanar-PPE`
+- Provisioning PostgreSQL + Redis managés
+- Génération des clés `SECRET_KEY` + `ENCRYPTION_KEY` aléatoires
+- Configuration de toutes les variables d'environnement
+- Build du conteneur (Nixpacks ou Dockerfile.railway)
+- Démarrage des 4 services via supervisord
+- Création du super-user `admin / AdminSanar2026!`
+- Seed de 3 patients + 1 médecin de démo
+- Affichage de l'URL publique
 
-Une fois déployé (3-5 minutes), tester :
+### 3. Vérifier le déploiement (3-5 min)
 
 ```bash
-# Health check
+# Health check — doit retourner status=ok
 curl https://<votre-domaine>.up.railway.app/api/health/
-# Réponse attendue : {"status":"ok","services":{"database":"ok","redis":"ok","storage":"ok"}}
 
-# Swagger UI (documentation API)
+# Swagger UI — documentation interactive
 # Ouvrir : https://<votre-domaine>.up.railway.app/api/docs/
 
 # Admin Django
 # Ouvrir : https://<votre-domaine>.up.railway.app/admin/
-# Login : admin / AdminSanar2026! (si DJANGO_SUPERUSER_* défini)
+# Login : admin / AdminSanar2026!
 
 # Login API (patient démo)
 curl -X POST https://<votre-domaine>.up.railway.app/api/auth/login/ \
@@ -129,76 +99,145 @@ curl -X POST https://<votre-domaine>.up.railway.app/api/auth/login/ \
     -d '{"username":"patient_0@demo.app","password":"Patient2026!"}'
 ```
 
-### 6. Pointer les apps Flutter vers Railway
+## Variables d'environnement Railway
 
-Modifier `sanar/lib/shared/services/api_service.dart` :
+### Auto-fournies par Railway (ne pas définir)
 
-```dart
-static String get baseUrl {
-    // Production Railway
-    return 'https://<votre-domaine>.up.railway.app/api';
-    // En dev local :
-    // return 'http://10.0.2.2:8080/api';
-}
-```
+| Variable | Description |
+|----------|-------------|
+| `PORT` | Port HTTP dynamique (gunicorn écoute dessus) |
+| `DATABASE_URL` | PostgreSQL Railway (format `postgres://user:pass@host:port/db`) |
+| `REDIS_URL` | Redis Railway (format `redis://:pass@host:port`) |
+| `REDIS_PRIVATE_URL` | Redis réseau interne Railway (plus rapide) |
+| `RAILWAY_PUBLIC_DOMAIN` | Domaine `.up.railway.app` |
 
-Idem dans `sanar_medecin/lib/shared/services/api_service.dart`.
+### À définir manuellement (une seule fois)
 
-## Limitations Railway (plan gratuit)
+| Variable | Valeur recommandée | Description |
+|----------|-------------------|-------------|
+| `DJANGO_SECRET_KEY` | Générée aléatoirement (50+ chars) | Clé secrète Django |
+| `DJANGO_DEBUG` | `False` | Mode production |
+| `DJANGO_ENCRYPTION_KEY` | Générée (Fernet base64) | Chiffrement AES-256 champs sensibles |
+| `DJANGO_SUPERUSER_USERNAME` | `admin` | Login admin Django |
+| `DJANGO_SUPERUSER_PASSWORD` | `AdminSanar2026!` | Mot de passe admin |
+| `DJANGO_SUPERUSER_EMAIL` | `admin@sanar.app` | Email admin |
+| `DJANGO_SEED_DEMO` | `True` | Seed 3 patients + 1 médecin de démo |
+| `PORT_WS` | `8001` | Port Daphne pour WebSockets |
+
+### Optionnelles (services externes)
+
+| Variable | Service | Statut sans config |
+|----------|---------|-------------------|
+| `TWILIO_ACCOUNT_SID` + `AUTH_TOKEN` + `FROM_NUMBER` | SMS Twilio | SMS non envoyés (warning log) |
+| `FCM_SERVER_KEY` + `FCM_PROJECT_ID` | Notifications push FCM | Push non envoyés (warning log) |
+| `SENTRY_DSN` | Monitoring erreurs | Sentry désactivé |
+| `GOOGLE_CLIENT_ID` + `SECRET` | Synchro Google Calendar | Calendar désactivé |
+
+## Architecture des fichiers Railway
+
+| Fichier | Rôle |
+|---------|------|
+| `railway.json` | Config build NIXPACKS + healthcheck + restart policy |
+| `nixpacks.toml` | Build optimisé Python 3.12 + deps système + supervisord |
+| `Dockerfile.railway` | Alternative Docker (si Nixpacks échoue) |
+| `Procfile` | Compatibilité Heroku buildpack |
+| `sanar_admin/start_all.sh` | Script principal (lance supervisord) |
+| `sanar_admin/start.sh` | Backend gunicorn uniquement (mode simple) |
+| `sanar_admin/start_worker.sh` | Celery worker uniquement (mode multi-services) |
+| `sanar_admin/start_beat.sh` | Celery beat uniquement (mode multi-services) |
+| `sanar_admin/start_daphne.sh` | Daphne WebSockets uniquement (mode multi-services) |
+| `sanar_admin/supervisord.conf` | Config supervisord (4 processus) |
+
+## Comptes de démo (si `DJANGO_SEED_DEMO=True`)
+
+| Type | Username | Password | Rôle |
+|------|----------|----------|------|
+| Admin Django | `admin` | `AdminSanar2026!` | Accès admin complet |
+| Patient 1 | `patient_0@demo.app` | `Patient2026!` | Patient Kossi Afi |
+| Patient 2 | `patient_1@demo.app` | `Patient2026!` | Patient Mansour Bou |
+| Patient 3 | `patient_2@demo.app` | `Patient2026!` | Patient Adjovi Claire |
+| Médecin | `dr_demo@demo.app` | `Medecin2026!` | Dr. Demo (généraliste) |
+
+## Endpoints à tester après déploiement
+
+| Méthode | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/api/health/` | Health check (public) |
+| GET | `/api/docs/` | Swagger UI interactif |
+| GET | `/api/redoc/` | ReDoc documentation |
+| POST | `/api/auth/login/` | Login → JWT |
+| POST | `/api/auth/register/` | Inscription patient |
+| GET | `/api/patient/profile/` | Profil patient (JWT) |
+| GET | `/api/medecins/` | Liste médecins |
+| GET | `/api/hopitaux/` | Liste hôpitaux |
+| POST | `/api/rendez-vous/` | Prendre RDV (détection conflit) |
+| POST | `/api/urgences/` | Bouton SOS Flutter |
+| GET | `/api/urgence/<uuid:token>/` | Accès PUBLIC par QR code |
+| GET | `/api/file-attente/ma-position/` | Position file d'attente |
+| POST | `/api/assigner-patient/` | Assignation multi-hôpitaux |
+| GET | `/api/exports/dossier-pdf/` | Export PDF dossier |
+| GET | `/api/exports/dossier-fhir/` | Export FHIR R4 JSON |
+| POST | `/api/prescriptions/<id>/signer/` | Signature électronique |
+| DELETE | `/api/rgpd/anonymiser/` | Droit à l'oubli RGPD |
+| GET | `/api/patients/recherche-floue/?q=Dupont` | Recherche floue |
+
+## Limitations connues (plan gratuit Railway)
 
 | Ressource | Plan gratuit | Plan Hobby (5$/mois) |
 |-----------|--------------|---------------------|
-| CPU | 0.5 vCPU | 1 vCPU |
+| CPU | 0.5 vCPU partagé | 1 vCPU |
 | RAM | 500 MB | 1 GB |
 | Crédit | 5$ (≈ 500h) | Illimité |
-| SSL | Auto (Let's Encrypt) | Auto |
-| Domaine | .up.railway.app | Personnalisé OK |
 | Sleep | Après 30 min idle | Toujours actif |
+| SSL | Auto (Let's Encrypt) | Auto |
+| Domaine | `.up.railway.app` | Personnalisé OK |
 
-**Pour la démo PPE** : le plan gratuit suffit pour 500 heures de tests.
+**Pour la démo PPE** : le plan gratuit suffit pour 500 heures de tests (≈ 3 semaines à 5h/jour).
 
-## Limitations de ce déploiement
+## Limitations techniques
 
-Ce setup Railway déploie **uniquement le backend Django**. Les fonctionnalités suivantes nécessitent des services séparés non inclus dans la démo :
+1. **WebSockets sans reverse proxy** : Daphne écoute sur le port 8001, séparé du port principal 8080 (gunicorn). Pour accéder aux WebSockets depuis l'extérieur, configurer un reverse proxy ou utiliser Railway TCP proxy. La téléconsultation WebRTC peut nécessiter une configuration supplémentaire.
 
-1. **Celery worker** : les rappels RDV automatiques ne fonctionneront pas. Pour activer, créer un second service Railway avec `startCommand: celery -A sanar_admin worker --loglevel=info`.
+2. **Coturn TURN non déployé** : le serveur TURN pour NAT traversal WebRTC n'est pas inclus. Pour la téléconsultation entre 2 clients sur réseaux différents, ajouter un service Coturn séparé.
 
-2. **Celery beat** : les tâches planifiées ne se déclenchent pas. Idem, second service Railway.
-
-3. **Daphne (WebSockets)** : la téléconsultation WebRTC ne fonctionne pas. Pour activer, remplacer gunicorn par Daphne dans `start.sh`.
-
-4. **Coturn (TURN)** : le serveur TURN pour NAT traversal WebRTC n'est pas déployé. À configurer séparément.
-
-Pour la démo PPE, ces limitations sont acceptables : l'API REST, le dashboard, l'admin, le bouton SOS (sans notif push), le QR code médical, la file d'attente, les exports et la signature électronique fonctionnent.
+3. **Fichiers media non persistants** : les fichiers uploadés (analyses PDF, documents) sont stockés dans `/app/media/` qui est éphémère. Pour la persistance, configurer un bucket S3 ou un volume Railway persistant.
 
 ## Logs et debugging
 
 ```bash
-# Logs en temps réel
+# Logs en temps réel (tous les services)
 railway logs
 
 # Ouvrir un shell dans le conteneur
 railway shell
 
-# Variables d'environnement
+# Vérifier les variables
 railway variables
 
 # Redémarrer le service
 railway redeploy
-```
 
-## Arrêter / supprimer le déploiement
-
-```bash
-# Suspendre temporairement
-railway down
-
-# Supprimer le projet (DELETE toutes les données !)
-railway delete
+# Statut du service
+railway status
 ```
 
 ## Coût estimé (démo PPE)
 
-- Plan gratuit (5$ credit) : suffisant pour ~500 heures de tests
-- Plan Hobby (5$/mois) : pour une démo 24/7 pendant 1 mois
-- Coût total ≈ 5$ pour une démo complète de soutenance
+- Plan gratuit (5$ credit) : ~500 heures de tests
+- Plan Hobby (5$/mois) : démo 24/7 pendant 1 mois
+- PostgreSQL Railway : inclus dans le crédit (500 MB gratuits)
+- Redis Railway : inclus dans le crédit (500 MB gratuits)
+- **Coût total ≈ 5$ pour une démo complète de soutenance**
+
+## Arrêter / supprimer le déploiement
+
+```bash
+# Suspendre temporairement (ne supprime pas les données)
+railway down
+
+# Reprendre
+railway up
+
+# Supprimer le projet (DELETE toutes les données !)
+railway delete
+```
