@@ -46,4 +46,4 @@ EXPOSE 8080
 # (évite les faux négatifs pendant les migrations au démarrage)
 
 # Démarre gunicorn directement (sans script shell)
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "sanar_admin.wsgi:application"]
+CMD ["bash", "/app/start_railway.sh"]
