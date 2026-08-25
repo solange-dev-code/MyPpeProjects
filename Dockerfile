@@ -31,9 +31,11 @@ RUN cd /app && python manage.py collectstatic --noinput 2>/dev/null || true
 # Dossiers
 RUN mkdir -p /app/staticfiles /app/media /app/logs
 
+# Script de démarrage avec migrations + seed
+COPY sanar_admin/start_railway.sh /app/start_railway.sh
+RUN chmod +x /app/start_railway.sh
+
 EXPOSE 8080
 
-# Gunicorn sur port fixe 8080 — Railway route automatiquement vers ce port
-# Pas de variable $PORT (Railway l'injecte mais ne la résout pas dans CMD)
-ENTRYPOINT ["gunicorn"]
-CMD ["--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "sanar_admin.wsgi:application"]
+# Démarre via script (migrations + seed + gunicorn)
+CMD ["bash", "/app/start_railway.sh"]
