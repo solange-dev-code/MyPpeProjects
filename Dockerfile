@@ -1,41 +1,50 @@
-# ─── Backend Django (sanar_admin) ───
-FROM python:3.12-slim AS backend
+# ─── Dockerfile Railway — backend Django all-in-one ───
+# Build optimisé pour Debian Trixie (python:3.12-slim)
+# Lance gunicorn + daphne + celery worker + celery beat via supervisord
 
-# Dépendances système pour WeasyPrint, psycopg2, etc.
+FROM python:3.12-slim
+
+# Dépendances système minimales (paquets stables sur Debian Trixie)
+# WeasyPrint nécessite pango + cairo + gdk-pixbuf
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
     libcairo2 \
-    libgdk-pixbuf2.0-0 \
     libffi-dev \
+    libjpeg-dev \
+    libpng-dev \
     shared-mime-info \
+    fonts-liberation \
+    supervisor \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Copie requirements et installation
-COPY sanar_admin/requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+COPY sanar_admin/requirements.txt /app/requirements.txt
+RUN pip install --no-cache-dir -r /app/requirements.txt
 
-# Copie du code
-COPY sanar_admin/ .
+# Copie du code backend
+COPY sanar_admin/ /app/
 
-# Collecte des statics
+# Scripts de démarrage
+RUN chmod +x /app/start.sh /app/start_all.sh /app/start_worker.sh \
+              /app/start_beat.sh /app/start_daphne.sh 2>/dev/null || true
+
+# Préparation des dossiers
 RUN mkdir -p /app/staticfiles /app/media /app/logs
 
-EXPOSE 8080
+# Railway attribue dynamiquement le port via $PORT
+ENV PORT=${PORT:-8080}
+ENV PORT_WS=${PORT_WS:-8001}
+EXPOSE 8080 8001
 
-# Commande par défaut : gunicorn en production
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "4", "sanar_admin.wsgi:application"]
+# Healthcheck sur le port principal
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+    CMD curl -f http://localhost:${PORT:-8080}/api/health/ || exit 1
 
-
-# ─── Celery worker ───
-FROM backend AS celery-worker
-CMD ["celery", "-A", "sanar_admin", "worker", "--loglevel=info", "--concurrency=2"]
-
-
-# ─── Celery beat (scheduler) ───
-FROM backend AS celery-beat
-CMD ["celery", "-A", "sanar_admin", "beat", "--loglevel=info"]
+# Démarre tous les services via supervisord
+CMD ["bash", "/app/start_all.sh"]

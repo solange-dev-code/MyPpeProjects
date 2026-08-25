@@ -43,6 +43,7 @@ services:
   backend:
     build:
       context: .
+      dockerfile: Dockerfile.dev
       target: backend
     container_name: sanar_backend
     restart: unless-stopped
@@ -73,6 +74,7 @@ services:
   celery-worker:
     build:
       context: .
+      dockerfile: Dockerfile.dev
       target: celery-worker
     container_name: sanar_celery_worker
     restart: unless-stopped
@@ -94,6 +96,7 @@ services:
   celery-beat:
     build:
       context: .
+      dockerfile: Dockerfile.dev
       target: celery-beat
     container_name: sanar_celery_beat
     restart: unless-stopped

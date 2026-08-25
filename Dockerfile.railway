@@ -1,23 +1,20 @@
 # ─── Dockerfile Railway — backend Django all-in-one ───
-# Build contexte : racine du dépôt (.)
+# Build optimisé pour Debian Trixie (python:3.12-slim)
 # Lance gunicorn + daphne + celery worker + celery beat via supervisord
-# Idéal pour le plan Railway gratuit (1 seul service)
 
 FROM python:3.12-slim
 
-# Dépendances système pour WeasyPrint, psycopg2, cryptography, Pillow + supervisord
+# Dépendances système minimales (paquets stables sur Debian Trixie)
+# WeasyPrint nécessite pango + cairo + gdk-pixbuf
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
     libpango-1.0-0 \
     libpangoft2-1.0-0 \
     libcairo2 \
-    libgdk-pixbuf-2.0-0 \
     libffi-dev \
     libjpeg-dev \
     libpng-dev \
-    libxml2 \
-    libxslt1-dev \
     shared-mime-info \
     fonts-liberation \
     supervisor \
@@ -35,7 +32,7 @@ COPY sanar_admin/ /app/
 
 # Scripts de démarrage
 RUN chmod +x /app/start.sh /app/start_all.sh /app/start_worker.sh \
-              /app/start_beat.sh /app/start_daphne.sh
+              /app/start_beat.sh /app/start_daphne.sh 2>/dev/null || true
 
 # Préparation des dossiers
 RUN mkdir -p /app/staticfiles /app/media /app/logs
@@ -46,7 +43,7 @@ ENV PORT_WS=${PORT_WS:-8001}
 EXPOSE 8080 8001
 
 # Healthcheck sur le port principal
-HEALTHCHECK --interval=30s --timeout=10s --start-period=90s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
     CMD curl -f http://localhost:${PORT:-8080}/api/health/ || exit 1
 
 # Démarre tous les services via supervisord
