@@ -1,15 +1,18 @@
 # ─── Nixpacks config pour Railway ───
-# Build optimisé Python 3.12 + deps système pour WeasyPrint
-# Démarre tous les services via supervisord (plan gratuit)
+# Build optimisé Python 3.12 + deps système pour WeasyPrint + supervisord
+# Démarre tous les services via supervisord (plan gratuit all-in-one)
 
 [phases.setup]
-nixPkgs = ['python312', 'postgresql_16.lib', 'openssl', 'libffi', 'fontconfig',
-           'freetype', 'fribidi', 'harfbuzz', 'libjpeg', 'libpng', 'libtiff',
-           'libwebp', 'libxcrypt', 'pango', 'glib', 'gobject-introspection',
+nixPkgs = ['python312', 'postgresql_16.lib', 'openssl', 'libffi',
+           'fontconfig', 'freetype', 'fribidi', 'harfbuzz',
+           'libjpeg', 'libpng', 'libtiff', 'libwebp',
+           'pango', 'glib', 'gobject-introspection',
            'cairo', 'gdk-pixbuf', 'zlib', 'pkg-config']
 
+# aptPkgs pour WeasyPrint (paquets Debian avec noms corrigés pour Trixie)
 aptPkgs = ['libpango-1.0-0', 'libpangoft2-1.0-0', 'libcairo2',
-           'libgdk-pixbuf2.0-0', 'shared-mime-info', 'supervisor']
+           'libgdk-pixbuf-2.0-0', 'shared-mime-info', 'supervisor',
+           'libxml2', 'libxslt1-dev', 'fonts-liberation']
 
 [phases.install]
 cmds = [
