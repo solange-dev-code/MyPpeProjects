@@ -33,5 +33,7 @@ RUN mkdir -p /app/staticfiles /app/media /app/logs
 
 EXPOSE 8080
 
-# CMD : gunicorn sur port 8080 fixe (Railway fait le routing vers $PORT)
-CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "sanar_admin.wsgi:application"]
+# Gunicorn sur port fixe 8080 — Railway route automatiquement vers ce port
+# Pas de variable $PORT (Railway l'injecte mais ne la résout pas dans CMD)
+ENTRYPOINT ["gunicorn"]
+CMD ["--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "sanar_admin.wsgi:application"]
