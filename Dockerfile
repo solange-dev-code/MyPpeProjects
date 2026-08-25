@@ -33,5 +33,5 @@ RUN mkdir -p /app/staticfiles /app/media /app/logs
 
 EXPOSE 8080
 
-# CMD : gunicorn direct avec $PORT résolu par bash
-CMD ["bash", "-c", "cd /app && gunicorn --bind 0.0.0.0:${PORT:-8080} --workers 2 --timeout 120 --access-logfile - --error-logfile - sanar_admin.wsgi:application"]
+# CMD : gunicorn sur port 8080 fixe (Railway fait le routing vers $PORT)
+CMD ["gunicorn", "--bind", "0.0.0.0:8080", "--workers", "2", "--timeout", "120", "--access-logfile", "-", "--error-logfile", "-", "sanar_admin.wsgi:application"]
