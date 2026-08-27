@@ -5,7 +5,7 @@
 <div class="page-header">
     <div>
         <div class="page-title">Ajouter un utilisateur</div>
-        <div class="page-subtitle">Créer un nouveau compte utilisateur</div>
+        <div class="page-subtitle">Creer un admin d'hopital et lui assigner un hopital</div>
     </div>
 </div>
 
@@ -16,7 +16,7 @@
                 {% csrf_token %}
                 <div class="row g-3">
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">Prénom</label>
+                        <label class="form-label fw-semibold">Prenom</label>
                         <input type="text" name="first_name" class="form-control"
                                placeholder="John">
                     </div>
@@ -26,46 +26,44 @@
                                placeholder="Doe">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label fw-semibold">
-                            Nom d'utilisateur *
-                        </label>
+                        <label class="form-label fw-semibold">Nom d'utilisateur *</label>
                         <input type="text" name="username" class="form-control"
                                placeholder="johndoe" required>
                     </div>
                     <div class="col-md-6">
+                        <label class="form-label fw-semibold">Telephone</label>
+                        <input type="text" name="telephone" class="form-control"
+                               placeholder="+228 90 00 00 00">
+                    </div>
+                    <div class="col-md-6">
                         <label class="form-label fw-semibold">Email</label>
                         <input type="email" name="email" class="form-control"
-                               placeholder="john@sanar.com">
+                               placeholder="john@sanar.app">
                     </div>
-                    <div class="col-12">
+                    <div class="col-md-6">
                         <label class="form-label fw-semibold">Mot de passe *</label>
                         <input type="password" name="password" class="form-control"
                                required>
                     </div>
-                    <div class="col-12">
-                        <label class="form-label fw-semibold">Rôle</label>
-                        <div class="d-flex gap-3 mt-1">
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox"
-                                       name="is_staff" id="is_staff">
-                                <label class="form-check-label" for="is_staff"
-                                       style="font-size:14px;">
-                                    Staff (accès admin)
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="checkbox"
-                                       name="is_superuser" id="is_superuser">
-                                <label class="form-check-label" for="is_superuser"
-                                       style="font-size:14px;">
-                                    Super Admin
-                                </label>
-                            </div>
-                        </div>
+                    <div class="col-md-6">
+                        <label class="form-label fw-semibold">Role *</label>
+                        <select name="role" class="form-select" id="roleSelect" required>
+                            <option value="admin_hopital" selected>Administrateur Hopital</option>
+                            <option value="super_admin">Super Administrateur</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6" id="hopitalField">
+                        <label class="form-label fw-semibold">Hopital assigne *</label>
+                        <select name="hopital_id" class="form-select" id="hopitalSelect">
+                            <option value="">-- Choisir un hopital --</option>
+                            {% for h in hopitaux %}
+                            <option value="{{ h.id }}">{{ h.nom }} ({{ h.ville }})</option>
+                            {% endfor %}
+                        </select>
                     </div>
                     <div class="col-12 d-flex gap-2 mt-2">
                         <button type="submit" class="btn-primary-sanar">
-                            <i class="bi bi-person-plus"></i> Créer l'utilisateur
+                            <i class="bi bi-person-plus"></i> Creer l'utilisateur
                         </button>
                         <a href="{% url 'users_app:liste' %}"
                            class="btn btn-outline-secondary">Annuler</a>
@@ -77,36 +75,51 @@
     <div class="col-md-5">
         <div class="chart-card">
             <h6 class="fw-bold mb-3">
-                <i class="bi bi-info-circle text-primary"></i> Rôles disponibles
+                <i class="bi bi-info-circle text-primary"></i> Roles disponibles
             </h6>
             <div class="mb-3">
-                <span class="badge" 
-                      style="background:#DBEAFE;color:#2563EB;font-size:12px;">
+                <span class="badge" style="background:#DBEAFE;color:#2563EB;font-size:12px;">
                     Super Admin
                 </span>
                 <p style="font-size:13px;color:#64748b;margin-top:4px;">
-                    Accès complet à toutes les fonctionnalités
+                    Acces complet. Gere les hopitaux et cree les admins d'hopital.
+                    Ne peut pas ajouter de medecins (reserve aux admins d'hopital).
                 </p>
             </div>
             <div class="mb-3">
-                <span class="badge" 
-                      style="background:#DCFCE7;color:#16A34A;font-size:12px;">
-                    Staff
+                <span class="badge" style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                    Administrateur Hopital
                 </span>
                 <p style="font-size:13px;color:#64748b;margin-top:4px;">
-                    Accès à l'interface d'administration
+                    Gere UNIQUEMENT les medecins de SON hopital.
+                    Voit les dossiers des patients ayant pris RDV dans son hopital.
                 </p>
             </div>
             <div>
-                <span class="badge" 
-                      style="background:#F1F5F9;color:#64748b;font-size:12px;">
-                    Utilisateur
+                <span class="badge" style="background:#F1F5F9;color:#64748b;font-size:12px;">
+                    Patient (Flutter)
                 </span>
                 <p style="font-size:13px;color:#64748b;margin-top:4px;">
-                    Accès limité — correspond aux patients sur Flutter
+                    Les patients s'inscrivent via l'app Flutter.
+                    Leur dossier medical est cree automatiquement.
                 </p>
             </div>
         </div>
     </div>
 </div>
+
+<script>
+// Masquer le champ hopital si super_admin est selectionne
+document.getElementById('roleSelect').addEventListener('change', function() {
+    var hopitalField = document.getElementById('hopitalField');
+    var hopitalSelect = document.getElementById('hopitalSelect');
+    if (this.value === 'super_admin') {
+        hopitalField.style.display = 'none';
+        hopitalSelect.required = false;
+    } else {
+        hopitalField.style.display = '';
+        hopitalSelect.required = true;
+    }
+});
+</script>
 {% endblock %}

@@ -15,7 +15,7 @@
             {% csrf_token %}
             <div class="row g-3">
                 <div class="col-md-6">
-                    <label class="form-label fw-semibold">Prénom</label>
+                    <label class="form-label fw-semibold">Prenom</label>
                     <input type="text" name="first_name" class="form-control"
                            value="{{ user.first_name }}">
                 </div>
@@ -24,35 +24,48 @@
                     <input type="text" name="last_name" class="form-control"
                            value="{{ user.last_name }}">
                 </div>
-                <div class="col-12">
+                <div class="col-md-6">
                     <label class="form-label fw-semibold">Email</label>
                     <input type="email" name="email" class="form-control"
                            value="{{ user.email }}">
                 </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Telephone</label>
+                    <input type="text" name="telephone" class="form-control"
+                           value="{{ personnel.telephone|default:'' }}">
+                </div>
+                <div class="col-md-6">
+                    <label class="form-label fw-semibold">Role *</label>
+                    <select name="role" class="form-select" id="roleSelect">
+                        <option value="admin_hopital"
+                            {% if personnel.role == 'admin_hopital' %}selected{% endif %}>
+                            Administrateur Hopital
+                        </option>
+                        <option value="super_admin"
+                            {% if personnel.role == 'super_admin' or user.is_superuser %}selected{% endif %}>
+                            Super Administrateur
+                        </option>
+                    </select>
+                </div>
+                <div class="col-md-6" id="hopitalField">
+                    <label class="form-label fw-semibold">Hopital assigne</label>
+                    <select name="hopital_id" class="form-select" id="hopitalSelect">
+                        <option value="">-- Aucun --</option>
+                        {% for h in hopitaux %}
+                        <option value="{{ h.id }}"
+                            {% if personnel.hopital.id == h.id %}selected{% endif %}>
+                            {{ h.nom }} ({{ h.ville }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <div class="col-12">
-                    <label class="form-label fw-semibold">Permissions</label>
-                    <div class="d-flex gap-3 mt-1">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox"
-                                   name="is_active" id="is_active"
-                                   {% if user.is_active %}checked{% endif %}>
-                            <label class="form-check-label" for="is_active"
-                                   style="font-size:14px;">Actif</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox"
-                                   name="is_staff" id="is_staff"
-                                   {% if user.is_staff %}checked{% endif %}>
-                            <label class="form-check-label" for="is_staff"
-                                   style="font-size:14px;">Staff</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox"
-                                   name="is_superuser" id="is_superuser"
-                                   {% if user.is_superuser %}checked{% endif %}>
-                            <label class="form-check-label" for="is_superuser"
-                                   style="font-size:14px;">Super Admin</label>
-                        </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox"
+                               name="is_active" id="is_active"
+                               {% if user.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="is_active"
+                               style="font-size:14px;">Compte actif</label>
                     </div>
                 </div>
                 <div class="col-12 d-flex gap-2 mt-2">
@@ -66,4 +79,22 @@
         </form>
     </div>
 </div>
+
+<script>
+document.getElementById('roleSelect').addEventListener('change', function() {
+    var hopitalField = document.getElementById('hopitalField');
+    if (this.value === 'super_admin') {
+        hopitalField.style.display = 'none';
+    } else {
+        hopitalField.style.display = '';
+    }
+});
+// Initialiser l'affichage au chargement
+window.addEventListener('DOMContentLoaded', function() {
+    var role = document.getElementById('roleSelect').value;
+    if (role === 'super_admin') {
+        document.getElementById('hopitalField').style.display = 'none';
+    }
+});
+</script>
 {% endblock %}

@@ -194,7 +194,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for user in users %}
+            {% for item in users_with_personnel %}
             <tr>
                 <td><input type="checkbox"></td>
                 <td>
@@ -203,42 +203,50 @@
                                     border-radius:50%;display:flex;
                                     align-items:center;justify-content:center;
                                     color:#2563EB;font-weight:700;font-size:14px;">
-                            {{ user.username|first|upper }}
+                            {{ item.user.username|first|upper }}
                         </div>
                         <div>
                             <div style="font-size:14px;font-weight:600;
                                          color:#1e293b;">
-                                {{ user.get_full_name|default:user.username }}
+                                {{ item.user.get_full_name|default:item.user.username }}
                             </div>
                             <div style="font-size:12px;color:#94a3b8;">
-                                @{{ user.username }}
+                                @{{ item.user.username }}
                             </div>
                         </div>
                     </div>
                 </td>
                 <td style="font-size:13px;color:#64748b;">
-                    {{ user.email|default:"—" }}
+                    {{ item.user.email|default:"—" }}
                 </td>
                 <td>
-                    {% if user.is_superuser %}
+                    {% if item.role_display == 'Super Administrateur' or item.user.is_superuser %}
                     <span class="badge" 
                           style="background:#DBEAFE;color:#2563EB;font-size:12px;">
                         <i class="bi bi-shield-fill"></i> Super Admin
                     </span>
-                    {% elif user.is_staff %}
+                    {% elif item.role_display == 'Administrateur Hopital' %}
                     <span class="badge" 
                           style="background:#DCFCE7;color:#16A34A;font-size:12px;">
+                        <i class="bi bi-hospital"></i> Admin Hopital
+                    </span>
+                    {% elif item.user.is_staff %}
+                    <span class="badge" 
+                          style="background:#FEF3C7;color:#D97706;font-size:12px;">
                         <i class="bi bi-person-badge"></i> Staff
                     </span>
                     {% else %}
                     <span class="badge" 
                           style="background:#F1F5F9;color:#64748b;font-size:12px;">
-                        <i class="bi bi-person"></i> Utilisateur
+                        <i class="bi bi-person"></i> Patient
                     </span>
                     {% endif %}
                 </td>
+                <td style="font-size:13px;color:#64748b;">
+                    {{ item.hopital.nom|default:"—" }}
+                </td>
                 <td>
-                    {% if user.is_active %}
+                    {% if item.user.is_active %}
                     <span class="badge" 
                           style="background:#DCFCE7;color:#16A34A;font-size:12px;">
                         <i class="bi bi-circle-fill" 
@@ -253,11 +261,11 @@
                     {% endif %}
                 </td>
                 <td style="font-size:13px;color:#64748b;">
-                    {{ user.date_joined|date:"d/m/Y" }}
+                    {{ item.user.date_joined|date:"d/m/Y" }}
                 </td>
                 <td style="font-size:13px;color:#64748b;">
-                    {% if user.last_login %}
-                        {{ user.last_login|timesince }} ago
+                    {% if item.user.last_login %}
+                        {{ item.user.last_login|timesince }} ago
                     {% else %}
                         Jamais
                     {% endif %}
@@ -269,15 +277,15 @@
                         <ul class="dropdown-menu">
                             <li>
                                 <a class="dropdown-item"
-                                   href="{% url 'users_app:modifier' user.pk %}">
+                                   href="{% url 'users_app:modifier' item.user.pk %}">
                                     <i class="bi bi-pencil"></i> Modifier
                                 </a>
                             </li>
-                            {% if user != request.user %}
+                            {% if item.user != request.user %}
                             <li><hr class="dropdown-divider"></li>
                             <li>
                                 <form method="post"
-                                      action="{% url 'users_app:supprimer' user.pk %}">
+                                      action="{% url 'users_app:supprimer' item.user.pk %}">
                                     {% csrf_token %}
                                     <button type="submit" 
                                             class="dropdown-item text-danger"
@@ -293,7 +301,7 @@
             </tr>
             {% empty %}
             <tr>
-                <td colspan="8" class="text-center text-muted py-5">
+                <td colspan="9" class="text-center text-muted py-5">
                     <i class="bi bi-people" style="font-size:32px;"></i>
                     <div class="mt-2">Aucun utilisateur trouvé</div>
                 </td>
