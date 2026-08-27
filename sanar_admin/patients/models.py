@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from hopitaux.models import Hopital
+from .encrypted_fields import EncryptedCharField, EncryptedTextField
 import uuid
 import hashlib
 
@@ -16,14 +17,21 @@ class Patient(models.Model):
     ]
 
     user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-    nom = models.CharField(max_length=100)
-    prenom = models.CharField(max_length=100)
+
+    # ── CHAMPS CHIFFRÉS au repos (AES-256 via Fernet) ──
+    # Les données sensibles sont chiffrées en base de données.
+    # L'admin d'hopital voit les données en clair (déchiffrées par Django),
+    # mais si la base est compromise, les données sont illisibles sans la clé.
+    nom = EncryptedCharField(max_length=100)
+    prenom = EncryptedCharField(max_length=100)
+    telephone = EncryptedCharField(max_length=20)
+    adresse = EncryptedCharField(max_length=200, blank=True, default='')
+    allergies = EncryptedTextField(blank=True, default='Aucune')
+
+    # email reste en clair (pour login + recherche)
     email = models.EmailField(unique=True)
-    telephone = models.CharField(max_length=20)
     date_naissance = models.DateField()
-    adresse = models.CharField(max_length=200)
     groupe_sanguin = models.CharField(max_length=3, choices=GROUPE_SANGUIN_CHOICES, default='O+')
-    allergies = models.TextField(blank=True, default='Aucune')
     poids = models.FloatField(null=True, blank=True, default=0)
     taille = models.FloatField(null=True, blank=True, default=0)
     patient_id = models.CharField(max_length=20, unique=True)
@@ -32,15 +40,11 @@ class Patient(models.Model):
     hopital = models.ForeignKey(
         Hopital,
         on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
+        null=True, blank=True,
         related_name='patients'
     )
 
-    # ── HACHAGE des données patient pour sécurité ──
-    # Hash SHA-256 des champs sensibles (nom, prenom, telephone, email)
-    # Permet de vérifier l'intégrité des données sans stocker en clair le hash
-    # (les données restent en clair pour le métier, le hash sert d'audit)
+    # ── HACHAGE pour audit d'intégrité ──
     hash_donnees = models.CharField(
         max_length=64, blank=True, default='',
         help_text="Hash SHA-256 des donnees sensibles (audit integrite)"
@@ -61,12 +65,7 @@ class Patient(models.Model):
         return f"{self.prenom} {self.nom}"
 
     def calculer_hash_donnees(self):
-        """Calcule le hash SHA-256 des donnees sensibles du patient.
-        
-        Inclut : nom, prenom, email, telephone, date_naissance, groupe_sanguin, allergies.
-        Le hash est stocke pour audit d'integrite : toute modification ulterieure
-        des donnees sera detectable en recalculant le hash.
-        """
+        """Hash SHA-256 des donnees sensibles pour audit d'integrite."""
         donnees = '|'.join([
             self.nom or '',
             self.prenom or '',
@@ -79,7 +78,6 @@ class Patient(models.Model):
         return hashlib.sha256(donnees.encode('utf-8')).hexdigest()
 
     def hacher_donnees(self):
-        """Calcule et stocke le hash des donnees + horodate le hachage."""
         from django.utils import timezone
         self.hash_donnees = self.calculer_hash_donnees()
         self.date_hachage = timezone.now()
@@ -88,20 +86,17 @@ class Patient(models.Model):
 
     @property
     def integrite_verifiee(self):
-        """True si le hash actuel correspond au hash stocke (donnees non modifiees)."""
         if not self.hash_donnees:
             return False
         return self.calculer_hash_donnees() == self.hash_donnees
 
     def regenerer_token_urgence(self):
-        """Révoque l'ancien token et en génère un nouveau (en cas de fuite)."""
         import uuid as _uuid
         self.token_urgence = _uuid.uuid4()
         self.save()
         return self.token_urgence
 
     def save(self, *args, **kwargs):
-        """Recalcule automatiquement le hash a chaque sauvegarde."""
         self.hash_donnees = self.calculer_hash_donnees()
         from django.utils import timezone
         self.date_hachage = timezone.now()

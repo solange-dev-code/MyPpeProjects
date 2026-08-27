@@ -67,3 +67,6 @@ django-ratelimit==4.1.0
 
 # Note : scikit-learn, numpy, pandas retirés pour économiser RAM
 # Le service ML retournera un score "froid" par défaut (cf ml_predictions/services.py)
+
+# Chiffrement (deja inclus via cryptography)
+# Pas de package supplementaire necessaire - utilise cryptography.fernet directement
