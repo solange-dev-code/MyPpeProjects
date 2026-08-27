@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block title %}Horaires — Dr. {{ medecin.prenom }} {{ medecin.nom }} — Sanar{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <a href="{% url 'medecins:detail' medecin.id %}" class="btn btn-link text-decoration-none mb-3">
+    <i class="bi bi-arrow-left"></i> Retour au medecin
+  </a>
+
+  <div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+      <h1 class="h3 mb-0">
+        Horaires — Dr. {{ medecin.prenom }} {{ medecin.nom }}
+      </h1>
+      <span class="badge bg-{% if medecin.est_actif %}success{% else %}secondary{% endif %}">
+        {% if medecin.est_actif %}Actif{% else %}Inactif{% endif %}
+      </span>
+    </div>
+    <div class="card-body">
+      <p class="text-muted">
+        Specialite : {{ medecin.get_specialite_display }} —
+        Hopital : {{ medecin.hopital|default:"Non assigne" }}
+      </p>
+
+      {# ─── Tableau des disponibilites recurrentes ─── #}
+      <h2 class="h5 mb-3">Disponibilites recurrentes</h2>
+      
+      {% if disponibilites %}
+      <div class="table-responsive mb-4">
+        <table class="table table-bordered align-middle">
+          <thead class="table-dark">
+            <tr>
+              <th style="width: 20%;">Jour</th>
+              <th style="width: 15%;">Heure debut</th>
+              <th style="width: 15%;">Heure fin</th>
+              <th style="width: 15%;">Duree creneau</th>
+              <th style="width: 15%;">Hopital</th>
+              <th style="width: 20%;">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for d in disponibilites %}
+            <tr>
+              <td><strong>{{ d.get_jour_semaine_display }}</strong></td>
+              <td>{{ d.heure_debut|time:"H:i" }}</td>
+              <td>{{ d.heure_fin|time:"H:i" }}</td>
+              <td>{{ d.duree_creneau }} min</td>
+              <td>{{ d.hopital.nom }}</td>
+              <td>
+                {% if est_admin_hopital %}
+                <button class="btn btn-sm btn-outline-danger" 
+                        onclick="if(confirm('Supprimer cette disponibilite ?')) { 
+                          // TODO: appel suppression
+                        }">
+                  <i class="bi bi-trash"></i> Supprimer
+                </button>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle"></i>
+        Aucune disponibilite recurrente configuree pour ce medecin.
+      </div>
+      {% endif %}
+
+      {# ─── Formulaire ajout disponibilite (admin_hopital only) ─── #}
+      {% if est_admin_hopital %}
+      <div class="card border-primary mb-4">
+        <div class="card-header bg-primary text-white">
+          <h3 class="h6 mb-0">Ajouter une disponibilite recurrente</h3>
+        </div>
+        <div class="card-body">
+          <form method="post" action="{% url 'medecins:ajouter_disponibilite' medecin.id %}">
+            {% csrf_token %}
+            <div class="row g-3">
+              <div class="col-md-3">
+                <label class="form-label">Jour de la semaine</label>
+                <select name="jour_semaine" class="form-select" required>
+                  <option value="0">Lundi</option>
+                  <option value="1">Mardi</option>
+                  <option value="2">Mercredi</option>
+                  <option value="3">Jeudi</option>
+                  <option value="4">Vendredi</option>
+                  <option value="5">Samedi</option>
+                  <option value="6">Dimanche</option>
+                </select>
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Heure debut</label>
+                <input type="time" name="heure_debut" class="form-control" required value="09:00">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Heure fin</label>
+                <input type="time" name="heure_fin" class="form-control" required value="17:00">
+              </div>
+              <div class="col-md-2">
+                <label class="form-label">Duree creneau (min)</label>
+                <select name="duree_creneau" class="form-select">
+                  <option value="15">15 min</option>
+                  <option value="30" selected>30 min</option>
+                  <option value="45">45 min</option>
+                  <option value="60">60 min</option>
+                </select>
+              </div>
+              <div class="col-md-3">
+                <label class="form-label">Valide depuis</label>
+                <input type="date" name="validite_depuis" class="form-control" required 
+                       value="{% now 'Y-m-d' %}">
+              </div>
+            </div>
+            <div class="mt-3">
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Ajouter la disponibilite
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endif %}
+
+      {# ─── Tableau des creneaux disponibles pour les 7 prochains jours ─── #}
+      <h2 class="h5 mb-3">Creneaux disponibles (7 prochains jours)</h2>
+      
+      {% if jours %}
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Date</th>
+              <th>Jour</th>
+              <th>Creneaux disponibles</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for jour in jours %}
+            <tr class="{% if jour.nb_disponibles == 0 %}table-secondary{% elif jour.nb_disponibles > 0 %}table-success{% endif %}">
+              <td><strong>{{ jour.date|date:"d/m/Y" }}</strong></td>
+              <td>{{ jour.jour_nom }}</td>
+              <td>
+                {% if jour.creneaux %}
+                  {% for c in jour.creneaux %}
+                    {% if c.disponible %}
+                    <span class="badge bg-success me-1 mb-1" 
+                          style="cursor: pointer;"
+                          onclick="changerCreneau('{{ c.heure }}', '{{ jour.date|date:'Y-m-d' }}')">
+                      {{ c.heure }}
+                    </span>
+                    {% else %}
+                    <span class="badge bg-secondary me-1 mb-1 text-decoration-line-through">
+                      {{ c.heure }}
+                    </span>
+                    {% endif %}
+                  {% endfor %}
+                {% else %}
+                  <span class="text-muted">Aucun creneau</span>
+                {% endif %}
+              </td>
+              <td>
+                <strong>{{ jour.nb_disponibles }}</strong> / {{ jour.creneaux|length }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="alert alert-warning">
+        <i class="bi bi-exclamation-triangle"></i>
+        Aucun creneau disponible pour les 7 prochains jours.
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+<script>
+function changerCreneau(heure, date) {
+    if (confirm('Changer votre rendez-vous pour le ' + date + ' a ' + heure + ' ?')) {
+        // Rediriger vers la prise de RDV avec les parametres pre-remplis
+        window.location.href = '/appointments/ajouter/?date=' + date + '&heure=' + heure + '&medecin={{ medecin.id }}';
+    }
+}
+</script>
+{% endblock %}
