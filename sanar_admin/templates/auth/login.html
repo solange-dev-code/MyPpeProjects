@@ -1,93 +1,240 @@
-{% extends 'base.html' %}
-{% block title %}Sanar — Connexion{% endblock %}
-
-{% block content %}
-<div class="container" style="max-width: 440px; margin: 80px auto;">
-    <div class="chart-card" style="padding: 48px 40px;">
-
-        {# ─── Logo Sanar officiel ─── #}
-        <div class="text-center mb-4">
-            <img src="/static/img/logo_sanar_192.png" alt="Sanar"
-                 style="width: 100px; height: 100px; border-radius: 24px;
-                        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);">
-            <h1 style="font-size: 32px; font-weight: 800; color: #2563EB; margin-top: 16px;">
-                Sanar
-            </h1>
-            <p style="font-size: 14px; color: #64748b; margin-top: 4px;">
-                Votre sante en un clic
-            </p>
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sanar — Connexion</title>
+    <link rel="icon" type="image/png" href="/static/img/logo_sanar_32.png">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Nunito', 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1e293b 0%, #2563EB 100%);
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+        .login-container {
+            background: white; border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            max-width: 440px; width: 100%; padding: 48px 40px;
+        }
+        .logo-section { text-align: center; margin-bottom: 32px; }
+        .logo {
+            width: 100px; height: 100px; border-radius: 24px; margin: 0 auto 16px; display: block;
+            box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
+        }
+        .brand { font-size: 32px; font-weight: 800; color: #2563EB; }
+        .tagline { font-size: 14px; color: #64748b; margin-top: 4px; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-size: 13px; font-weight: 600; color: #1e293b; margin-bottom: 6px; }
+        input, select {
+            width: 100%; padding: 14px 16px; font-size: 15px;
+            border: 2px solid #e2e8f0; border-radius: 12px;
+            transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+        }
+        input:focus, select:focus {
+            border-color: #2563EB; box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+        .btn-login {
+            width: 100%; padding: 16px; font-size: 16px; font-weight: 700;
+            color: white; background: #2563EB; border: none; border-radius: 12px;
+            cursor: pointer; transition: background 0.2s; margin-top: 8px;
+        }
+        .btn-login:hover { background: #1D4ED8; }
+        .alert {
+            padding: 12px 16px; border-radius: 10px; font-size: 14px; margin-bottom: 20px;
+        }
+        .alert-danger { background: #fef2f2; color: #DC2626; border: 1px solid #fecaca; }
+        .demo-accounts {
+            margin-top: 32px; padding: 16px; background: #f8fafc; border-radius: 12px;
+            font-size: 12px; color: #64748b;
+        }
+        .demo-accounts h4 { color: #1e293b; font-size: 13px; margin-bottom: 8px; }
+        .demo-accounts .account {
+            display: flex; justify-content: space-between; padding: 4px 0;
+            border-bottom: 1px solid #e8eaeb;
+        }
+        .demo-accounts .account:last-child { border-bottom: none; }
+        .demo-accounts .role { font-weight: 600; color: #2563EB; }
+        .demo-accounts .credentials { font-family: monospace; color: #1e293b; }
+        .footer { text-align: center; margin-top: 24px; font-size: 12px; color: #94a3b8; }
+        .toggle-form { text-align: center; margin-top: 16px; font-size: 14px; color: #64748b; }
+        .toggle-form a { color: #2563EB; font-weight: 600; text-decoration: none; }
+        .toggle-form a:hover { text-decoration: underline; }
+        .register-form { display: none; }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="logo-section">
+            <img src="/static/img/logo_sanar_192.png" alt="Sanar" class="logo">
+            <div class="brand">Sanar</div>
+            <div class="tagline">Votre sante en un clic</div>
         </div>
 
-        {% if messages %}
-        {% for message in messages %}
-        <div class="alert alert-{{ message.tags|default:'info' }} alert-dismissible fade show" role="alert">
-            {{ message }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-        {% endfor %}
-        {% endif %}
-
-        <form method="post" action="{% url 'login' %}">
-            {% csrf_token %}
-
-            {# Champ next cache : toujours rediriger vers le dashboard #}
-            <input type="hidden" name="next" value="/">
-
-            <div class="mb-3">
-                <label class="form-label fw-semibold" style="font-size: 13px; color: #1e293b;">
-                    Nom d'utilisateur ou email
-                </label>
-                <input type="text" name="username" class="form-control form-control-lg"
-                       placeholder="admin" required autofocus
-                       style="border-radius: 12px; padding: 14px 16px;">
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label fw-semibold" style="font-size: 13px; color: #1e293b;">
-                    Mot de passe
-                </label>
-                <input type="password" name="password" class="form-control form-control-lg"
-                       placeholder="Votre mot de passe" required
-                       style="border-radius: 12px; padding: 14px 16px;">
-            </div>
-
-            {% if form.errors %}
-            <div class="alert alert-danger" role="alert">
-                <i class="bi bi-exclamation-triangle"></i>
-                Identifiants incorrects. Veuillez reessayer.
-            </div>
+        {# ─── Formulaire de connexion ─── #}
+        <div id="loginForm">
+            {% if messages %}
+            {% for message in messages %}
+            <div class="alert alert-danger">{{ message }}</div>
+            {% endfor %}
             {% endif %}
 
-            <button type="submit" class="btn w-100 btn-lg"
-                    style="background: #2563EB; color: white; border: none;
-                           border-radius: 12px; padding: 16px; font-size: 16px;
-                           font-weight: 700; margin-top: 8px;">
-                <i class="bi bi-box-arrow-in-right"></i> Se connecter
-            </button>
-        </form>
+            <form method="post" action="{% url 'login' %}">
+                {% csrf_token %}
+                <input type="hidden" name="next" value="/">
+                <div class="form-group">
+                    <label>Nom d'utilisateur ou email</label>
+                    <input type="text" name="username" placeholder="admin" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe</label>
+                    <input type="password" name="password" placeholder="Votre mot de passe" required>
+                </div>
+                {% if form.errors %}
+                <div class="alert alert-danger">
+                    Identifiants incorrects. Veuillez reessayer.
+                </div>
+                {% endif %}
+                <button type="submit" class="btn-login">Se connecter</button>
+            </form>
 
-        {# ─── Comptes de demonstration ─── #}
-        <div style="margin-top: 32px; padding: 16px; background: #f8fafc;
-                    border-radius: 12px; font-size: 12px; color: #64748b;">
-            <div style="color: #1e293b; font-size: 13px; font-weight: 600; margin-bottom: 8px;">
-                Comptes de demonstration
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 4px 0;
-                        border-bottom: 1px solid #e8eaeb;">
-                <span style="font-weight: 600; color: #2563EB;">Admin</span>
-                <span style="font-family: monospace;">admin / AdminSanar2026</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 4px 0;
-                        border-bottom: 1px solid #e8eaeb;">
-                <span style="font-weight: 600; color: #16A34A;">Medecin</span>
-                <span style="font-family: monospace;">dr_demo / Medecin2026!</span>
-            </div>
-            <div style="display: flex; justify-content: space-between; padding: 4px 0;">
-                <span style="font-weight: 600; color: #D97706;">Patient</span>
-                <span style="font-family: monospace;">patient_0 / Patient2026!</span>
+            <div class="toggle-form">
+                Pas encore de compte ? <a href="#" onclick="toggleForm(); return false;">S'inscrire</a>
             </div>
         </div>
 
+        {# ─── Formulaire d'inscription ─── #}
+        <div id="registerForm" class="register-form">
+            <form method="post" action="/api/auth/register/" id="regForm">
+                <div class="form-group">
+                    <label>Nom *</label>
+                    <input type="text" name="nom" placeholder="Dupont" required>
+                </div>
+                <div class="form-group">
+                    <label>Prenom *</label>
+                    <input type="text" name="prenom" placeholder="Jean" required>
+                </div>
+                <div class="form-group">
+                    <label>Nom d'utilisateur *</label>
+                    <input type="text" name="username" placeholder="jdupont" required>
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" name="email" placeholder="jean@sanar.app">
+                </div>
+                <div class="form-group">
+                    <label>Mot de passe *</label>
+                    <input type="password" name="password" placeholder="********" required>
+                </div>
+                <div class="form-group">
+                    <label>Telephone *</label>
+                    <input type="text" name="telephone" placeholder="+228 90 00 00 00" required>
+                </div>
+                <div class="form-group">
+                    <label>Date de naissance *</label>
+                    <input type="date" name="date_naissance" required>
+                </div>
+                <div class="form-group">
+                    <label>Adresse</label>
+                    <input type="text" name="adresse" placeholder="Lome">
+                </div>
+                <div class="form-group">
+                    <label>Groupe sanguin</label>
+                    <select name="groupe_sanguin">
+                        <option value="O+">O+</option>
+                        <option value="O-">O-</option>
+                        <option value="A+">A+</option>
+                        <option value="A-">A-</option>
+                        <option value="B+">B+</option>
+                        <option value="B-">B-</option>
+                        <option value="AB+">AB+</option>
+                        <option value="AB-">AB-</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn-login">Creer mon compte</button>
+            </form>
+            <div id="registerError" class="alert alert-danger" style="display:none;"></div>
+            <div class="toggle-form">
+                Deja inscrit ? <a href="#" onclick="toggleForm(); return false;">Se connecter</a>
+            </div>
+        </div>
+
+        {# ─── Comptes de demonstration ─── #}
+        <div class="demo-accounts">
+            <h4>Comptes de demonstration</h4>
+            <div class="account">
+                <span class="role">Admin</span>
+                <span class="credentials">admin / AdminSanar2026</span>
+            </div>
+            <div class="account">
+                <span class="role">Medecin</span>
+                <span class="credentials">dr_demo / Medecin2026!</span>
+            </div>
+            <div class="account">
+                <span class="role">Patient</span>
+                <span class="credentials">patient_0 / Patient2026!</span>
+            </div>
+        </div>
+
+        <div class="footer">Sanar v2.0 — © 2026</div>
     </div>
-</div>
-{% endblock %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function toggleForm() {
+    var login = document.getElementById('loginForm');
+    var register = document.getElementById('registerForm');
+    if (login.style.display === 'none') {
+        login.style.display = '';
+        register.style.display = 'none';
+    } else {
+        login.style.display = 'none';
+        register.style.display = '';
+    }
+}
+
+// Inscription via API (AJAX)
+document.getElementById('regForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    var formData = new FormData(this);
+    var data = {};
+    formData.forEach(function(val, key) { data[key] = val; });
+
+    fetch('/api/auth/register/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(function(response) { return response.json(); })
+    .then(function(data) {
+        if (data.access) {
+            // Inscription reussie → rediriger vers login
+            var errDiv = document.getElementById('registerError');
+            errDiv.style.display = 'block';
+            errDiv.className = 'alert alert-success';
+            errDiv.style.background = '#f0fdf4';
+            errDiv.style.color = '#16A34A';
+            errDiv.style.border = '1px solid #bbf7d0';
+            errDiv.textContent = 'Compte cree avec succes ! Vous pouvez vous connecter.';
+            errDiv.style.display = 'block';
+            setTimeout(function() {
+                toggleForm();
+            }, 2000);
+        } else {
+            var errDiv = document.getElementById('registerError');
+            errDiv.style.display = 'block';
+            errDiv.textContent = 'Erreur : ' + JSON.stringify(data);
+        }
+    })
+    .catch(function(error) {
+        var errDiv = document.getElementById('registerError');
+        errDiv.style.display = 'block';
+        errDiv.textContent = 'Erreur de connexion au serveur.';
+    });
+});
+</script>
+</body>
+</html>
