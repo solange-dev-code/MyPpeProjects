@@ -122,17 +122,28 @@ def ajouter_user(request):
             messages.error(request, f"Le nom d'utilisateur '{username}' existe deja.")
             return redirect('users_app:ajouter')
 
+        # Verifier que le mot de passe est assez long
+        if not password or len(password) < 8:
+            messages.error(request, "Le mot de passe doit contenir au moins 8 caracteres.")
+            hopitaux = Hopital.objects.filter(actif=True)
+            return render(request, 'users_app/ajouter.html', {'hopitaux': hopitaux})
+
         # Creer le User
-        is_superuser = (role == 'super_admin')
-        user = User.objects.create_user(
-            username=username,
-            email=email,
-            password=password,
-            first_name=first_name,
-            last_name=last_name,
-            is_staff=True,  # Tous les personnels ont acces a l'admin
-            is_superuser=is_superuser,
-        )
+        try:
+            is_superuser = (role == 'super_admin')
+            user = User.objects.create_user(
+                username=username,
+                email=email,
+                password=password,
+                first_name=first_name,
+                last_name=last_name,
+                is_staff=True,
+                is_superuser=is_superuser,
+            )
+        except Exception as e:
+            messages.error(request, f"Erreur lors de la creation : {e}")
+            hopitaux = Hopital.objects.filter(actif=True)
+            return render(request, 'users_app/ajouter.html', {'hopitaux': hopitaux})
 
         # Creer le Personnel avec role + hopital
         hopital = None
