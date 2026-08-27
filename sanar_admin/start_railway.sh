@@ -49,25 +49,36 @@ from hopitaux.models import Hopital
 from django.contrib.auth.models import User
 from datetime import date
 
-# Nettoyer les anciens comptes de démo (pour éviter les doublons)
+# Nettoyer TOUS les comptes de démo et l'hopital démo
+Patient.objects.filter(patient_id__startswith='DEMO').delete()
+Medecin.objects.filter(nom='Demo').delete()
 User.objects.filter(username__in=['dr_demo', 'patient_0', 'patient_1', 'patient_2']).delete()
 Hopital.objects.filter(nom='CHU Demo').delete()
 
-if not Hopital.objects.exists():
-    h = Hopital.objects.create(
-        nom='CHU Demo', adresse='Lome', ville='Lome',
-        latitude=6.17, longitude=1.23, actif=True, telephone='+22890000000'
-    )
-    # Medecin demo — email identique au username pour login simple
+# Créer l'hopital démo
+h, created = Hopital.objects.get_or_create(
+    nom='CHU Demo',
+    defaults={
+        'adresse': 'Lome', 'ville': 'Lome',
+        'latitude': 6.17, 'longitude': 1.23,
+        'actif': True, 'telephone': '+22890000000'
+    }
+)
+
+# Medecin demo
+if not User.objects.filter(username='dr_demo').exists():
     u_m = User.objects.create_user('dr_demo', 'dr_demo@demo.app', 'Medecin2026!')
     Medecin.objects.create(user=u_m, nom='Demo', prenom='Dr', specialite='generaliste', telephone='+22891000000', hopital=h)
-    # Patients demo — email identique au username pour login simple
-    for i, (n, p) in enumerate([('Kossi', 'Afi'), ('Mansour', 'Bou'), ('Adjovi', 'Claire')]):
-        username = f'patient_{i}'
-        email = f'patient_{i}@demo.app'
+
+# Patients demo
+for i, (n, p) in enumerate([('Kossi', 'Afi'), ('Mansour', 'Bou'), ('Adjovi', 'Claire')]):
+    username = f'patient_{i}'
+    email = f'patient_{i}@demo.app'
+    if not User.objects.filter(username=username).exists():
         u = User.objects.create_user(username, email, 'Patient2026!')
         Patient.objects.create(user=u, nom=n, prenom=p, email=email, telephone=f'+22890{i}00000', date_naissance=date(1990+i, 1, 15), adresse='Lome', patient_id=f'DEMO{i:04d}', hopital=h)
-    print('Demo data seeded.')
+
+print('Demo data seeded successfully.')
 PYEOF
 fi
 
