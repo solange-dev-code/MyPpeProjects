@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% block title %}Déconnexion — Sanar{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 500px; margin-top: 100px;">
+    <div class="chart-card text-center" style="padding: 48px 32px;">
+        <div style="width: 80px; height: 80px; margin: 0 auto 24px;
+                    background: #DCFCE7; border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;">
+            <i class="bi bi-check-circle" style="font-size: 40px; color: #16A34A;"></i>
+        </div>
+        <h2 class="h4 mb-2" style="color: #1e293b;">Vous etes deconnecte</h2>
+        <p class="text-muted mb-4">Votre session a ete fermee avec succes.</p>
+        <a href="{% url 'login' %}" class="btn-primary-sanar" style="display: inline-flex;">
+            <i class="bi bi-box-arrow-in-right"></i> Se reconnecter
+        </a>
+    </div>
+</div>
+
+<script>
+setTimeout(function() {
+    window.location.href = '{% url "login" %}';
+}, 3000);
+</script>
+{% endblock %}

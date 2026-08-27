@@ -137,23 +137,83 @@ def rendez_vous_list(request):
         return Response(RendezVousSerializer(rdvs, many=True).data)
 
     elif request.method == 'POST':
-        try:
-            medecin = Medecin.objects.get(pk=request.data.get('medecin_id'))
-        except Medecin.DoesNotExist:
-            return Response({'error': 'Médecin non trouvé'}, status=404)
-
-        hopital = None
+        # Le patient choisit un hôpital + une date/heure
+        # La plateforme assigne automatiquement un médecin disponible
         hopital_id = request.data.get('hopital_id')
-        if hopital_id:
-            try:
-                hopital = Hopital.objects.get(pk=hopital_id)
-            except Hopital.DoesNotExist:
-                return Response({'error': 'Hôpital non trouvé'}, status=404)
-
-        # ── NOUVEAU : vérification de conflit (anti double-booking) ──
         date_rdv = request.data.get('date')
         heure_rdv = request.data.get('heure')
-        if date_rdv and heure_rdv and verifier_conflit(medecin.id, date_rdv, heure_rdv):
+
+        if not hopital_id:
+            return Response({'error': 'Veuillez choisir un hôpital.'}, status=400)
+        if not date_rdv or not heure_rdv:
+            return Response({'error': 'Veuillez choisir une date et une heure.'}, status=400)
+
+        try:
+            hopital = Hopital.objects.get(pk=hopital_id, actif=True)
+        except Hopital.DoesNotExist:
+            return Response({'error': 'Hôpital non trouvé'}, status=404)
+
+        # Si le patient a spécifié un medecin_id, l'utiliser
+        medecin = None
+        medecin_id = request.data.get('medecin_id')
+        if medecin_id:
+            try:
+                medecin = Medecin.objects.get(pk=medecin_id, est_actif=True, hopital=hopital)
+            except Medecin.DoesNotExist:
+                return Response({'error': 'Médecin non trouvé dans cet hôpital.'}, status=404)
+        else:
+            # ── ASSIGNATION AUTOMATIQUE : trouver un médecin disponible ──
+            # selon l'horaire choisi par le patient
+            from datetime import datetime as dt_cls
+            try:
+                date_obj = dt_cls.strptime(date_rdv, '%Y-%m-%d').date()
+                jour_semaine = date_obj.weekday()
+                heure_obj = dt_cls.strptime(heure_rdv, '%H:%M').time()
+            except (ValueError, TypeError):
+                return Response({'error': 'Format date ou heure invalide.'}, status=400)
+
+            # Chercher les médecins de cet hôpital qui ont une disponibilité
+            # ce jour-là et à cette heure
+            from medecins.models import DisponibiliteMedecin, CongeMedecin
+            medecins_disponibles = Medecin.objects.filter(
+                est_actif=True,
+                hopital=hopital,
+                disponibilites__jour_semaine=jour_semaine,
+                disponibilites__heure_debut__lte=heure_obj,
+                disponibilites__heure_fin__gte=heure_obj,
+                disponibilites__actif=True,
+            ).distinct()
+
+            # Exclure les médecins en congé
+            medecins_en_conge = []
+            for m in medecins_disponibles:
+                if CongeMedecin.objects.filter(
+                    medecin=m,
+                    date_debut__lte=date_obj,
+                    date_fin__gte=date_obj
+                ).exists():
+                    medecins_en_conge.append(m.id)
+            medecins_disponibles = medecins_disponibles.exclude(id__in=medecins_en_conge)
+
+            # Exclure les médecins déjà occupés à cette heure
+            medecins_occupes = RendezVous.objects.filter(
+                date=date_obj, heure=heure_obj,
+                statut__in=['en_attente', 'confirme'],
+                medecin__hopital=hopital
+            ).values_list('medecin_id', flat=True)
+            medecins_disponibles = medecins_disponibles.exclude(id__in=medecins_occupes)
+
+            if not medecins_disponibles.exists():
+                return Response({
+                    'error': 'Aucun médecin disponible à cet horaire dans cet hôpital. '
+                             'Veuillez choisir un autre créneau.'
+                }, status=404)
+
+            # Assigner le premier médecin disponible (ou selon charge)
+            medecin = medecins_disponibles.first()
+
+        # Vérification de conflit (anti double-booking)
+        if verifier_conflit(medecin.id, date_rdv, heure_rdv):
             return Response(
                 {'error': 'Ce créneau est déjà réservé pour ce médecin. '
                           'Veuillez en choisir un autre.'},
@@ -166,15 +226,16 @@ def rendez_vous_list(request):
             hopital=hopital,
             date=date_rdv,
             heure=heure_rdv,
-            motif=request.data.get('motif'),
+            motif=request.data.get('motif', ''),
             note=request.data.get('note', ''),
-            statut='en_attente',
+            statut='en_attente',  # En attente de confirmation par le médecin
         )
 
         # Si le patient n'a pas encore d'hôpital assigné, on le rattache
-        if hopital and not patient.hopital:
+        if not patient.hopital:
             patient.hopital = hopital
             patient.save()
+
         return Response(
             RendezVousSerializer(rdv).data,
             status=status.HTTP_201_CREATED
