@@ -10,127 +10,114 @@
 {% block content %}
 <div class="container-fluid py-4">
 
-  {# ─── En-tete professionnel ─── #}
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <div>
-      <h1 class="h3 mb-1">Tableau de bord</h1>
-      <p class="text-muted mb-0 small">{{ total_patients }} patients enregistrés — {{ rdv_jour }} rendez-vous aujourd'hui</p>
-    </div>
-    <div class="btn-group">
-      <button class="btn btn-outline-secondary btn-sm" onclick="location.reload()">
-        <i class="bi bi-arrow-clockwise"></i> Actualiser
-      </button>
-    </div>
-  </div>
-
-  {# ─── KPI Cards (sans emojis, design pro) ─── #}
+  {# ─── KPI Cards ─── #}
   <div class="row g-3 mb-4">
     <div class="col-md-2">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-primary h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <div class="text-muted small text-uppercase fw-semibold">Patients</div>
-              <div class="fs-2 fw-bold text-primary mt-1">{{ total_patients }}</div>
-              <div class="small text-success mt-1">
-                <i class="bi bi-arrow-up-short"></i>{{ patients_30j }} ce mois
-              </div>
+              <div class="text-muted small">Patients</div>
+              <div class="fs-3 fw-bold text-primary">{{ total_patients }}</div>
+              <div class="small text-success">+{{ patients_30j }} ce mois</div>
             </div>
-            <div class="bg-primary bg-opacity-10 rounded p-2">
-              <i class="bi bi-people text-primary fs-5"></i>
-            </div>
+            <i class="bi bi-people text-primary opacity-50 fs-3"></i>
           </div>
         </div>
       </div>
     </div>
     <div class="col-md-2">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-info h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <div class="text-muted small text-uppercase fw-semibold">RDV du jour</div>
-              <div class="fs-2 fw-bold text-info mt-1">{{ rdv_jour }}</div>
-              <div class="small text-muted mt-1">Planifiés</div>
+              <div class="text-muted small">RDV du jour</div>
+              <div class="fs-3 fw-bold text-info">{{ rdv_jour }}</div>
+              <div class="small text-muted">Aujourd'hui</div>
             </div>
-            <div class="bg-info bg-opacity-10 rounded p-2">
-              <i class="bi bi-calendar-check text-info fs-5"></i>
-            </div>
+            <i class="bi bi-calendar-check text-info opacity-50 fs-3"></i>
           </div>
         </div>
       </div>
     </div>
     <div class="col-md-2">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-warning h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <div class="text-muted small text-uppercase fw-semibold">Analyses</div>
-              <div class="fs-2 fw-bold text-warning mt-1">{{ analyses_cours }}</div>
-              <div class="small text-muted mt-1">En attente</div>
+              <div class="text-muted small">Analyses en cours</div>
+              <div class="fs-3 fw-bold text-warning">{{ analyses_cours }}</div>
+              <div class="small text-muted">En attente</div>
             </div>
-            <div class="bg-warning bg-opacity-10 rounded p-2">
-              <i class="bi bi-hourglass-split text-warning fs-5"></i>
-            </div>
+            <i class="bi bi-hourglass-split text-warning opacity-50 fs-3"></i>
           </div>
         </div>
       </div>
     </div>
     <div class="col-md-2">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-danger h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <div class="text-muted small text-uppercase fw-semibold">Critiques</div>
-              <div class="fs-2 fw-bold text-danger mt-1">{{ patients_critiques }}</div>
-              <div class="small text-muted mt-1">À surveiller</div>
+              <div class="text-muted small">Patients critiques</div>
+              <div class="fs-3 fw-bold text-danger">{{ patients_critiques }}</div>
+              <div class="small text-muted">À surveiller</div>
             </div>
-            <div class="bg-danger bg-opacity-10 rounded p-2">
-              <i class="bi bi-heart-pulse text-danger fs-5"></i>
-            </div>
+            <i class="bi bi-heart-pulse text-danger opacity-50 fs-3"></i>
           </div>
         </div>
       </div>
     </div>
     <div class="col-md-2">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-secondary h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <div class="text-muted small text-uppercase fw-semibold">Urgences</div>
-              <div class="fs-2 fw-bold mt-1">{{ urgences_en_cours }}</div>
-              <div class="small text-muted mt-1">En cours</div>
+              <div class="text-muted small">Urgences</div>
+              <div class="fs-3 fw-bold">{{ urgences_en_cours }}</div>
+              <div class="small text-muted">En cours</div>
             </div>
-            <div class="bg-secondary bg-opacity-10 rounded p-2">
-              <i class="bi bi-exclamation-triangle text-secondary fs-5"></i>
-            </div>
+            <i class="bi bi-exclamation-triangle text-secondary opacity-50 fs-3"></i>
           </div>
         </div>
       </div>
     </div>
+    {% if ca_mensuel is not None %}
     <div class="col-md-2">
-      <div class="card border-0 shadow-sm h-100">
+      <div class="card border-success h-100">
         <div class="card-body">
           <div class="d-flex justify-content-between align-items-start">
             <div>
-              <div class="text-muted small text-uppercase fw-semibold">File d'attente</div>
-              <div class="fs-2 fw-bold mt-1">{{ file_attente|length }}</div>
-              <div class="small text-muted mt-1">En attente</div>
+              <div class="text-muted small">CA 30 jours</div>
+              <div class="fs-3 fw-bold text-success">{{ ca_mensuel|floatformat:0 }}</div>
+              <div class="small text-muted">FCFA</div>
             </div>
-            <div class="bg-success bg-opacity-10 rounded p-2">
-              <i class="bi bi-list-ol text-success fs-5"></i>
-            </div>
+            <i class="bi bi-cash-coin text-success opacity-50 fs-3"></i>
           </div>
         </div>
       </div>
     </div>
+    {% else %}
+    <div class="col-md-2">
+      <div class="card border-light h-100">
+        <div class="card-body">
+          <a href="{% url 'file_attente:liste' %}" class="text-decoration-none">
+            <div class="text-muted small">File d'attente</div>
+            <div class="fs-3 fw-bold">{{ file_attente|length }}</div>
+            <div class="small text-muted">En attente →</div>
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
 
-  {# ─── Graphiques ─── #}
+  {# ─── Charts row 1 ─── #}
   <div class="row g-3 mb-4">
     <div class="col-md-8">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-white border-0 py-3">
-          <h2 class="h6 mb-0 fw-semibold">Évolution des inscriptions (12 mois)</h2>
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="bi bi-graph-up"></i> Évolution des inscriptions (12 mois)
         </div>
         <div class="card-body">
           <canvas id="chartEvolution" height="100"></canvas>
@@ -138,9 +125,9 @@
       </div>
     </div>
     <div class="col-md-4">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-white border-0 py-3">
-          <h2 class="h6 mb-0 fw-semibold">Répartition statuts RDV</h2>
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="bi bi-pie-chart"></i> Répartition statuts RDV
         </div>
         <div class="card-body">
           <canvas id="chartStatuts" height="100"></canvas>
@@ -149,11 +136,12 @@
     </div>
   </div>
 
+  {# ─── Charts row 2 ─── #}
   <div class="row g-3 mb-4">
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-white border-0 py-3">
-          <h2 class="h6 mb-0 fw-semibold">Rendez-vous (7 derniers jours)</h2>
+      <div class="card h-100">
+        <div class="card-header">
+          <i class="bi bi-bar-chart"></i> RDV 7 derniers jours
         </div>
         <div class="card-body">
           <canvas id="chartRdv" height="100"></canvas>
@@ -161,10 +149,10 @@
       </div>
     </div>
     <div class="col-md-6">
-      <div class="card border-0 shadow-sm h-100">
-        <div class="card-header bg-white border-0 py-3 d-flex justify-content-between align-items-center">
-          <h2 class="h6 mb-0 fw-semibold">Analyses critiques non traitées</h2>
-          <span class="badge bg-danger">{{ analyses_critiques|length }}</span>
+      <div class="card h-100 border-danger">
+        <div class="card-header bg-danger text-white">
+          <i class="bi bi-exclamation-octagon"></i> Analyses critiques non traitées
+          ({{ analyses_critiques|length }})
         </div>
         <div class="card-body">
           {% if analyses_critiques %}
@@ -197,7 +185,7 @@
           {% else %}
           <div class="text-center text-muted py-4">
             <i class="bi bi-check-circle fs-2"></i>
-            <p class="mt-2 mb-0">Aucune analyse critique en attente</p>
+            <p class="mt-2">Aucune analyse critique en attente</p>
           </div>
           {% endif %}
         </div>
@@ -205,63 +193,53 @@
     </div>
   </div>
 
-  {# ─── Accès rapides ─── #}
+  {# ─── Quick actions ─── #}
   <div class="row g-3 mb-4">
     <div class="col-md-3">
-      <a href="{% url 'urgences:liste' %}" class="card border-0 shadow-sm text-decoration-none h-100">
-        <div class="card-body text-center py-4">
-          <div class="bg-danger bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
-            <i class="bi bi-exclamation-triangle text-danger fs-4"></i>
-          </div>
-          <div class="fw-semibold text-dark">Urgences</div>
+      <a href="{% url 'urgences:liste' %}" class="card text-decoration-none h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-exclamation-triangle text-danger fs-1"></i>
+          <div class="mt-2">Urgences</div>
         </div>
       </a>
     </div>
     <div class="col-md-3">
-      <a href="{% url 'file_attente:liste' %}" class="card border-0 shadow-sm text-decoration-none h-100">
-        <div class="card-body text-center py-4">
-          <div class="bg-primary bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
-            <i class="bi bi-list-ol text-primary fs-4"></i>
-          </div>
-          <div class="fw-semibold text-dark">File d'attente</div>
+      <a href="{% url 'file_attente:liste' %}" class="card text-decoration-none h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-list-ol text-primary fs-1"></i>
+          <div class="mt-2">File d'attente</div>
         </div>
       </a>
     </div>
     <div class="col-md-3">
-      <a href="{% url 'analyses:liste' %}" class="card border-0 shadow-sm text-decoration-none h-100">
-        <div class="card-body text-center py-4">
-          <div class="bg-warning bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
-            <i class="bi bi-clipboard2-pulse text-warning fs-4"></i>
-          </div>
-          <div class="fw-semibold text-dark">Analyses</div>
+      <a href="{% url 'analyses:liste' %}" class="card text-decoration-none h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-clipboard2-pulse text-warning fs-1"></i>
+          <div class="mt-2">Analyses</div>
         </div>
       </a>
     </div>
     <div class="col-md-3">
-      <a href="{% url 'dossiers_medicaux:liste' %}" class="card border-0 shadow-sm text-decoration-none h-100">
-        <div class="card-body text-center py-4">
-          <div class="bg-success bg-opacity-10 rounded-circle d-inline-flex align-items-center justify-content-center mb-2" style="width: 48px; height: 48px;">
-            <i class="bi bi-folder2-open text-success fs-4"></i>
-          </div>
-          <div class="fw-semibold text-dark">Dossiers médicaux</div>
+      <a href="{% url 'dossiers_medicaux:liste' %}" class="card text-decoration-none h-100">
+        <div class="card-body text-center">
+          <i class="bi bi-folder2-open text-success fs-1"></i>
+          <div class="mt-2">Dossiers</div>
         </div>
       </a>
     </div>
   </div>
 
   {# ─── Activités récentes ─── #}
-  <div class="card border-0 shadow-sm">
-    <div class="card-header bg-white border-0 py-3">
-      <h2 class="h6 mb-0 fw-semibold">Activités récentes</h2>
+  <div class="card">
+    <div class="card-header">
+      <i class="bi bi-clock-history"></i> Activités récentes
     </div>
     <div class="card-body">
       {% for a in activites %}
-      <div class="d-flex align-items-center mb-2 pb-2 border-bottom">
-        <div class="bg-light rounded p-2 me-3">
-          <i class="bi {{ a.icone }} text-primary"></i>
-        </div>
+      <div class="d-flex align-items-center mb-2">
+        <i class="bi {{ a.icone }} text-primary me-3"></i>
         <div class="flex-grow-1">{{ a.texte }}</div>
-        <small class="text-muted">{{ a.temps|timesince }} auparavant</small>
+        <small class="text-muted">{{ a.temps|timesince }} ago</small>
       </div>
       {% endfor %}
     </div>
@@ -270,7 +248,8 @@
 </div>
 
 <script>
-var ctxEvo = document.getElementById('chartEvolution').getContext('2d');
+// ─── Chart.js : Évolution des patients ───
+const ctxEvo = document.getElementById('chartEvolution').getContext('2d');
 new Chart(ctxEvo, {
   type: 'line',
   data: {
@@ -280,21 +259,29 @@ new Chart(ctxEvo, {
       data: {{ evolution_data|safe|default:'[]' }},
       borderColor: '#1f6c92',
       backgroundColor: 'rgba(31, 108, 146, 0.1)',
-      tension: 0.3, fill: true,
-      pointBackgroundColor: '#1f6c92', pointRadius: 4
+      tension: 0.3,
+      fill: true,
+      pointBackgroundColor: '#1f6c92',
+      pointRadius: 4
     }]
   },
   options: {
     responsive: true,
-    plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } } }
+    plugins: {
+      legend: { display: false }
+    },
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }
+    }
   }
 });
 
-var ctxStatut = document.getElementById('chartStatuts').getContext('2d');
-var statutLabels = {{ statut_labels|safe|default:'[]' }};
-var statutLabelsFr = statutLabels.map(function(s) {
-  var map = {'en_attente':'En attente','confirme':'Confirme','reporte':'Reporte','annule':'Annule','termine':'Termine'};
+// ─── Chart.js : Répartition statuts RDV (donut) ───
+const ctxStatut = document.getElementById('chartStatuts').getContext('2d');
+const statutLabels = {{ statut_labels|safe|default:'[]' }};
+const statutLabelsFr = statutLabels.map(s => {
+  const map = {'en_attente':'En attente','confirme':'Confirmé','reporte':'Reporté',
+               'annule':'Annulé','termine':'Terminé'};
   return map[s] || s;
 });
 new Chart(ctxStatut, {
@@ -304,29 +291,41 @@ new Chart(ctxStatut, {
     datasets: [{
       data: {{ statut_data|safe|default:'[]' }},
       backgroundColor: ['#ffc107', '#198754', '#0dcaf0', '#dc3545', '#6c757d'],
-      borderWidth: 2, borderColor: '#fff'
+      borderWidth: 2,
+      borderColor: '#fff'
     }]
   },
-  options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { position: 'bottom' }
+    }
+  }
 });
 
-var ctxRdv = document.getElementById('chartRdv').getContext('2d');
+// ─── Chart.js : RDV 7 jours ───
+const ctxRdv = document.getElementById('chartRdv').getContext('2d');
 new Chart(ctxRdv, {
   type: 'bar',
   data: {
     labels: {{ rdv_labels|safe|default:'[]' }},
     datasets: [{
-      label: 'RDV', data: {{ rdv_data|safe|default:'[]' }},
-      backgroundColor: '#1f6c92', borderRadius: 4
+      label: 'RDV',
+      data: {{ rdv_data|safe|default:'[]' }},
+      backgroundColor: '#1f6c92',
+      borderRadius: 4
     }]
   },
   options: {
     responsive: true,
     plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } } }
+    scales: {
+      y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' } }
+    }
   }
 });
 
-setTimeout(function() { location.reload(); }, 60000);
+// ─── Auto-refresh toutes les 60 secondes ───
+setTimeout(() => location.reload(), 60000);
 </script>
 {% endblock %}

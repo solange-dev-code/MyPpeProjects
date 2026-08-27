@@ -5,11 +5,21 @@
 <div class="page-header">
     <div>
         <div class="page-title">Liste des Médecins</div>
-        <div class="page-subtitle">Gérer les médecins de la plateforme Sanar</div>
+        <div class="page-subtitle">Gérer les médecins
+            {% if est_super_admin %}de tous les hôpitaux (lecture seule)
+            {% elif est_admin_hopital %}de {{ hopital_personnel.nom }}{% endif %}
+        </div>
     </div>
+    {% if est_admin_hopital %}
     <a href="{% url 'medecins:ajouter' %}" class="btn-primary-sanar">
         <i class="bi bi-plus-lg"></i> Ajouter un médecin
     </a>
+    {% elif est_super_admin %}
+    <div class="alert alert-warning py-1 px-3 mb-0 small">
+        <i class="bi bi-info-circle"></i>
+        Seul l'administrateur de l'hôpital peut ajouter des médecins
+    </div>
+    {% endif %}
 </div>
 
 <!-- Stats -->
@@ -36,6 +46,19 @@
             </div>
         </div>
     </div>
+    {% if est_admin_hopital %}
+    <div class="col-md-3">
+        <div class="stat-card orange">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="stat-label">Inactifs</div>
+                    <div class="stat-value">{{ inactifs }}</div>
+                </div>
+                <i class="bi bi-person-x stat-icon"></i>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 </div>
 
 <!-- Filtres + Liste -->
@@ -68,7 +91,7 @@
                 <th style="font-size:12px;color:#2563EB;font-weight:700;">MÉDECIN</th>
                 <th style="font-size:12px;color:#2563EB;font-weight:700;">SPÉCIALITÉ</th>
                 <th style="font-size:12px;color:#2563EB;font-weight:700;">CONTACT</th>
-                <th style="font-size:12px;color:#2563EB;font-weight:700;">CABINET</th>
+                <th style="font-size:12px;color:#2563EB;font-weight:700;">HÔPITAL</th>
                 <th style="font-size:12px;color:#2563EB;font-weight:700;">STATUT</th>
                 <th style="font-size:12px;color:#2563EB;font-weight:700;">ACTIONS</th>
             </tr>
@@ -104,7 +127,7 @@
                     {{ m.telephone }}
                 </td>
                 <td style="font-size:13px;color:#64748b;">
-                    {{ m.cabinet|default:"—" }}
+                    {{ m.hopital.nom|default:"—" }}
                 </td>
                 <td>
                     {% if m.est_actif %}
@@ -132,6 +155,13 @@
                             </li>
                             <li>
                                 <a class="dropdown-item"
+                                   href="{% url 'medecins:horaires' m.pk %}">
+                                    <i class="bi bi-clock"></i> Horaires
+                                </a>
+                            </li>
+                            {% if est_admin_hopital %}
+                            <li>
+                                <a class="dropdown-item"
                                    href="{% url 'medecins:modifier' m.pk %}">
                                     <i class="bi bi-pencil"></i> Modifier
                                 </a>
@@ -148,6 +178,7 @@
                                     </button>
                                 </form>
                             </li>
+                            {% endif %}
                         </ul>
                     </div>
                 </td>
@@ -157,10 +188,12 @@
                 <td colspan="6" class="text-center text-muted py-5">
                     <i class="bi bi-person-badge" style="font-size:32px;"></i>
                     <div class="mt-2">Aucun médecin trouvé</div>
+                    {% if est_admin_hopital %}
                     <a href="{% url 'medecins:ajouter' %}"
                        class="btn-primary-sanar d-inline-flex mt-3">
                         <i class="bi bi-plus-lg"></i> Ajouter un médecin
                     </a>
+                    {% endif %}
                 </td>
             </tr>
             {% endfor %}
