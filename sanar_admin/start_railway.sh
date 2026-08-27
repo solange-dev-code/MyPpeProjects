@@ -48,16 +48,25 @@ from medecins.models import Medecin
 from hopitaux.models import Hopital
 from django.contrib.auth.models import User
 from datetime import date
+
+# Nettoyer les anciens comptes de démo (pour éviter les doublons)
+User.objects.filter(username__in=['dr_demo', 'patient_0', 'patient_1', 'patient_2']).delete()
+Hopital.objects.filter(nom='CHU Demo').delete()
+
 if not Hopital.objects.exists():
     h = Hopital.objects.create(
         nom='CHU Demo', adresse='Lome', ville='Lome',
         latitude=6.17, longitude=1.23, actif=True, telephone='+22890000000'
     )
-    u_m = User.objects.create_user('dr_demo', 'dr@demo.app', 'Medecin2026!')
+    # Medecin demo — email identique au username pour login simple
+    u_m = User.objects.create_user('dr_demo', 'dr_demo@demo.app', 'Medecin2026!')
     Medecin.objects.create(user=u_m, nom='Demo', prenom='Dr', specialite='generaliste', telephone='+22891000000', hopital=h)
+    # Patients demo — email identique au username pour login simple
     for i, (n, p) in enumerate([('Kossi', 'Afi'), ('Mansour', 'Bou'), ('Adjovi', 'Claire')]):
-        u = User.objects.create_user(f'patient_{i}', f'p{i}@demo.app', 'Patient2026!')
-        Patient.objects.create(user=u, nom=n, prenom=p, email=f'p{i}@demo.app', telephone=f'+22890{i}00000', date_naissance=date(1990+i, 1, 15), adresse='Lome', patient_id=f'DEMO{i:04d}', hopital=h)
+        username = f'patient_{i}'
+        email = f'patient_{i}@demo.app'
+        u = User.objects.create_user(username, email, 'Patient2026!')
+        Patient.objects.create(user=u, nom=n, prenom=p, email=email, telephone=f'+22890{i}00000', date_naissance=date(1990+i, 1, 15), adresse='Lome', patient_id=f'DEMO{i:04d}', hopital=h)
     print('Demo data seeded.')
 PYEOF
 fi

@@ -25,7 +25,11 @@ RUN pip install --no-cache-dir -r /app/requirements.txt
 # Code backend
 COPY sanar_admin/ /app/
 
-# Migrations + collectstatic au build (pas au runtime)
+# Migrations + collectstatic au build (avec clés temporaires)
+ENV DJANGO_SECRET_KEY=build-temp-secret-key-not-for-production
+ENV DJANGO_ENCRYPTION_KEY=dGVzdC1rZXktZm9yLWNpLW9ubHktbm90LXByb2R1Y3Rpb24=
+ENV DJANGO_DEBUG=True
+ENV DJANGO_ALLOWED_HOSTS=*
 RUN cd /app && python manage.py collectstatic --noinput 2>/dev/null || true
 
 # Dossiers

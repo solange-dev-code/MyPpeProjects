@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <!-- Logo Sanar — croix médicale + cœur + caducée stylisé -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#1f6c92;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#32454e;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="heartGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#ffffff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e8eaeb;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  <circle cx="256" cy="256" r="240" fill="url(#bgGradient)" />
+  <g transform="translate(256, 256)">
+    <rect x="-35" y="-130" width="70" height="260" rx="15" fill="url(#heartGradient)" />
+    <rect x="-130" y="-35" width="260" height="70" rx="15" fill="url(#heartGradient)" />
+  </g>
+  <g transform="translate(256, 380) scale(0.5)">
+    <path d="M 0,-30 C -25,-60 -75,-60 -75,-20 C -75,20 -25,50 0,80 C 25,50 75,20 75,-20 C 75,-60 25,-60 0,-30 Z"
+          fill="#1f6c92" opacity="0.9" />
+  </g>
+  <g transform="translate(256, 180)" stroke="#1f6c92" stroke-width="8" fill="none" opacity="0.6">
+    <path d="M -40,0 Q -20,-20 0,0 Q 20,20 40,0" />
+    <path d="M -40,20 Q -20,0 0,20 Q 20,40 40,20" />
+  </g>
+  <circle cx="256" cy="256" r="235" fill="none" stroke="#ffffff" stroke-width="3" opacity="0.3" />
+  <circle cx="256" cy="256" r="225" fill="none" stroke="#ffffff" stroke-width="1" opacity="0.2" />
+</svg>
