@@ -16,7 +16,10 @@ urlpatterns = [
 
     # Auth
     path('login/', auth_views.LoginView.as_view(template_name='auth/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(template_name='registration/logged_out.html'), name='logout'),
+    path('logout/', auth_views.LogoutView.as_view(
+        template_name='registration/logged_out.html',
+        http_method_names=['get', 'post']  # Autoriser GET pour logout simple
+    ), name='logout'),
 
     # Apps existantes
     path('', include('dashboard.urls')),
