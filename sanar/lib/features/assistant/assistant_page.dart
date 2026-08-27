@@ -144,7 +144,7 @@ class _AssistantPageState extends State<AssistantPage> {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.2),
+                color: Colors.white.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -314,7 +314,7 @@ class _AssistantPageState extends State<AssistantPage> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: green.withValues(alpha: 0.1),
+                color: green.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -348,7 +348,7 @@ class _AssistantPageState extends State<AssistantPage> {
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.05),
+                      color: Colors.black.withOpacity(0.05),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),
@@ -409,7 +409,7 @@ class _AssistantPageState extends State<AssistantPage> {
                   border: Border.all(color: const Color(0xFFE2E8F0)),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.03),
+                      color: Colors.black.withOpacity(0.03),
                       blurRadius: 4,
                       offset: const Offset(0, 2),
                     ),

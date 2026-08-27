@@ -171,8 +171,7 @@ class _QrMedicalPageState extends State<QrMedicalPage> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Token: ${_tokenUrgence.isNotEmpty ? _tokenUrgence.substring(0, 8)}...'
-                  : 'Chargement...',
+              'Token: ${_tokenUrgence.isNotEmpty ? _tokenUrgence.substring(0, 8) : "Chargement..."}...',
               style: const TextStyle(fontFamily: 'monospace', color: Colors.grey),
             ),
             const SizedBox(height: 24),

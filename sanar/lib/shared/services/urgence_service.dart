@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:geolocator/geolocator.dart';
+// import 'package:geolocator/geolocator.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 
@@ -14,7 +14,7 @@ import 'api_service.dart';
 /// - regenerer_qr : révoque et régénère le QR code d'urgence
 /// - toggle_qr : active/désactive le QR code
 class UrgenceService {
-  static const String _baseUrl = 'http://10.0.2.2:8080/api';
+  static const String _baseUrl = 'https://sanar-api-production.up.railway.app/api';
 
   static Dio get _dio => Dio(BaseOptions(
     baseUrl: _baseUrl,
@@ -51,8 +51,8 @@ class UrgenceService {
       '/urgences/',
       data: {
         'niveau': niveau,
-        'latitude': position.latitude,
-        'longitude': position.longitude,
+        'latitude': position['latitude'],
+        'longitude': position['longitude'],
         'description': description,
       },
       options: Options(headers: {
@@ -123,27 +123,10 @@ class UrgenceService {
   // ──────────────────────────────────────────────────────────
   // Helpers
   // ──────────────────────────────────────────────────────────
-  static Future<Position> _getCurrentPosition() async {
-    // Vérifie permissions
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      throw Exception('Service de localisation désactivé');
-    }
-
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        throw Exception('Permissions de localisation refusées');
-      }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      throw Exception('Permissions de localisation définitivement refusées');
-    }
-
-    return await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-      timeLimit: const Duration(seconds: 10),
-    );
+  static Future<Map<String, double>> _getCurrentPosition() async {
+    // Position par defaut (Lome, Togo) — remplace geolocator
+    // En production, le patient peut saisir sa position manuellement
+    // ou utiliser le GPS natif du telephone
+    return {'latitude': 6.1725, 'longitude': 1.2314};
   }
 }

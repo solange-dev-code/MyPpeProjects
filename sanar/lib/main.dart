@@ -58,16 +58,25 @@ class _SplashScreenState extends State<SplashScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 80,
-              height: 80,
+              width: 100,
+              height: 100,
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
               ),
-              child: const Icon(
-                Icons.access_time_rounded,
-                color: Color(0xFF2563EB),
-                size: 48,
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(24),
+                child: Image.asset(
+                  'assets/images/logo_sanar.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, child) {
+                    return const Icon(
+                      Icons.access_time_rounded,
+                      color: Color(0xFF2563EB),
+                      size: 48,
+                    );
+                  },
+                ),
               ),
             ),
             const SizedBox(height: 16),

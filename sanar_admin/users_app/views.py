@@ -123,23 +123,24 @@ def ajouter_user(request):
             return redirect('users_app:ajouter')
 
         # Verifier que le mot de passe est assez long
-        if not password or len(password) < 8:
-            messages.error(request, "Le mot de passe doit contenir au moins 8 caracteres.")
+        if not password or len(password) < 10:
+            messages.error(request, "Le mot de passe doit contenir au moins 10 caracteres.")
             hopitaux = Hopital.objects.filter(actif=True)
             return render(request, 'users_app/ajouter.html', {'hopitaux': hopitaux})
 
-        # Creer le User
+        # Creer le User (set_password = pas de validation Django)
         try:
             is_superuser = (role == 'super_admin')
-            user = User.objects.create_user(
+            user = User(
                 username=username,
                 email=email,
-                password=password,
                 first_name=first_name,
                 last_name=last_name,
                 is_staff=True,
                 is_superuser=is_superuser,
             )
+            user.set_password(password)
+            user.save()
         except Exception as e:
             messages.error(request, f"Erreur lors de la creation : {e}")
             hopitaux = Hopital.objects.filter(actif=True)
