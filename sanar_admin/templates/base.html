@@ -351,6 +351,7 @@
         <span>Sanar</span>
     </div>
     <nav class="sidebar-nav">
+        {# ─── Dashboard : visible par tous ─── #}
         <div class="nav-item">
             <a href="{% url 'dashboard:dashboard' %}" 
                class="nav-link {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}">
@@ -358,46 +359,46 @@
                 Dashboard
             </a>
         </div>
-        <div class="nav-item">
-            <a href="{% url 'analyses:liste' %}" 
-               class="nav-link {% if request.resolver_match.app_name == 'analyses' %}active{% endif %}">
-                <i class="bi bi-graph-up"></i>
-                Analyses Médicales
-            </a>
-        </div>
+
+        {# ─── SUPER_ADMIN UNIQUEMENT : Users + Hôpitaux ─── #}
         {% if not request.user.personnel or request.user.personnel.role == 'super_admin' %}
         <div class="nav-item">
             <a href="{% url 'users_app:liste' %}" 
             class="nav-link {% if request.resolver_match.app_name == 'users_app' %}active{% endif %}">
                 <i class="bi bi-people"></i>
-                Users
+                Utilisateurs
             </a>
         </div>
-        {% endif %}
-
-        <div class="nav-item">
-            <a href="{% url 'medecins:liste' %}"
-            class="nav-link {% if request.resolver_match.app_name == 'medecins' %}active{% endif %}">
-                <i class="bi bi-person-badge"></i>
-                Médecins
-            </a>
-        </div>
-
-       {% if not request.user.personnel or request.user.personnel.role == 'super_admin' %}
         <div class="nav-item">
             <a href="{% url 'hopitaux:liste' %}"
             class="nav-link {% if request.resolver_match.app_name == 'hopitaux' %}active{% endif %}">
                 <i class="bi bi-hospital"></i>
-                Hôpitaux
+                Hopitaux
             </a>
         </div>
         {% endif %}
 
+        {# ─── ADMIN_HOPITAL UNIQUEMENT : Médecins + Patients + RDV + Analyses + Dossiers + etc ─── #}
+        {% if request.user.personnel and request.user.personnel.role == 'admin_hopital' %}
+        <div class="nav-item">
+            <a href="{% url 'medecins:liste' %}"
+            class="nav-link {% if request.resolver_match.app_name == 'medecins' %}active{% endif %}">
+                <i class="bi bi-person-badge"></i>
+                Medecins
+            </a>
+        </div>
         <div class="nav-item">
             <a href="{% url 'patients:liste' %}" 
                class="nav-link {% if request.resolver_match.app_name == 'patients' %}active{% endif %}">
                 <i class="bi bi-person-heart"></i>
                 Patients
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'appointments:liste' %}" 
+               class="nav-link {% if request.resolver_match.app_name == 'appointments' %}active{% endif %}">
+                <i class="bi bi-calendar-check"></i>
+                Rendez-vous
             </a>
         </div>
         <div class="nav-item">
@@ -408,10 +409,17 @@
             </a>
         </div>
         <div class="nav-item">
-            <a href="{% url 'appointments:liste' %}" 
-               class="nav-link {% if request.resolver_match.app_name == 'appointments' %}active{% endif %}">
-                <i class="bi bi-calendar-check"></i>
-                Rendez-vous
+            <a href="{% url 'analyses:liste' %}" 
+               class="nav-link {% if request.resolver_match.app_name == 'analyses' %}active{% endif %}">
+                <i class="bi bi-graph-up"></i>
+                Analyses
+            </a>
+        </div>
+        <div class="nav-item">
+            <a href="{% url 'dossiers_medicaux:liste' %}" 
+            class="nav-link {% if request.resolver_match.app_name == 'dossiers_medicaux' %}active{% endif %}">
+                <i class="bi bi-folder2-open"></i>
+                Dossiers medicaux
             </a>
         </div>
         <div class="nav-item">
@@ -438,17 +446,13 @@
                 Calendrier
             </a>
         </div>
-        <div class="nav-item">
-            <a href="{% url 'dossiers_medicaux:liste' %}" 
-            class="nav-link {% if request.resolver_match.app_name == 'dossiers_medicaux' %}active{% endif %}">
-                <i class="bi bi-folder2-open"></i>
-                Dossiers médicaux
-            </a>
-        </div>
+        {% endif %}
+
+        {# ─── Déconnexion : visible par tous ─── #}
         <div class="nav-item mt-3">
             <a href="{% url 'logout' %}" class="nav-link text-danger">
                 <i class="bi bi-box-arrow-left"></i>
-                Déconnexion
+                Deconnexion
             </a>
         </div>
     </nav>
