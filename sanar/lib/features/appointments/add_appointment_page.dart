@@ -30,7 +30,7 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
   bool _isLoading = false;
   bool _isLoadingMedecins = true;
 
-  final List<String> _specialties = [
+  List<String> _specialties = [
     'Cardiologie',
     'Dermatologie',
     'Généraliste',
@@ -109,22 +109,25 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
     setState(() {
         _selectedSpecialty = specialty;
         _selectedDoctor = null;
-        _medecinsFiltres = [];
     });
 
     if (specialty == null) return;
 
     final valeurSpec = _specialtyMap[specialty] ?? specialty.toLowerCase();
     
-    // Debug — à retirer après
-    print('Spécialité cherchée: $valeurSpec');
-    print('Médecins disponibles: ${_medecins.map((m) => m['specialite']).toList()}');
-    
-    final filtres = _medecins
-        .where((m) => m['specialite'].toString().toLowerCase() == valeurSpec.toLowerCase())
-        .toList();
-
-    print('Médecins filtrés: ${filtres.length}');
+    // Filtrer par specialite ET par hopital choisi
+    List<dynamic> filtres;
+    if (_selectedHopital != null) {
+      final hopitalId = _selectedHopital!['id'];
+      filtres = _medecins
+          .where((m) => m['hopital'] == hopitalId)
+          .where((m) => m['specialite'].toString().toLowerCase() == valeurSpec.toLowerCase())
+          .toList();
+    } else {
+      filtres = _medecins
+          .where((m) => m['specialite'].toString().toLowerCase() == valeurSpec.toLowerCase())
+          .toList();
+    }
 
     setState(() {
         _medecinsFiltres = filtres;
@@ -351,8 +354,40 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
                                           ),
                                         )
                                         .toList(),
-                                    onChanged: (val) =>
-                                        setState(() => _selectedHopital = val),
+                                    onChanged: (val) {
+                                      setState(() {
+                                        _selectedHopital = val;
+                                        // Filtrer les medecins selon l'hopital choisi
+                                        _selectedDoctor = null;
+                                        _selectedSpecialty = null;
+                                        _medecinsFiltres = [];
+                                        if (val != null) {
+                                          final hopitalId = val['id'];
+                                          _medecinsFiltres = _medecins
+                                              .where((m) => m['hopital'] == hopitalId)
+                                              .toList();
+                                          // Extraire les specialites disponibles dans cet hopital
+                                          final specs = <String>[];
+                                          for (var m in _medecinsFiltres) {
+                                            final spec = m['specialite'] as String?;
+                                            if (spec != null && !specs.contains(spec)) {
+                                              specs.add(spec);
+                                            }
+                                          }
+                                          _specialties = specs.map((s) {
+                                            // Capitaliser la première lettre
+                                            return s[0].toUpperCase() + s.substring(1);
+                                          }).toList();
+                                        } else {
+                                          // Restaurer toutes les specialites
+                                          _specialties = [
+                                            'Cardiologue', 'Généraliste', 'Dermatologue',
+                                            'Gynécologue', 'Neurologue', 'Ophtalmologue',
+                                            'Pédiatre', 'Radiologue',
+                                          ];
+                                        }
+                                      });
+                                    },
                                   ),
                                 ),
                               ),
@@ -362,7 +397,8 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
 
                   const SizedBox(height: 16),
                   
-                  // Spécialité
+                  // Spécialité (affichée seulement si un hôpital est choisi)
+                  if (_selectedHopital != null) ...[
                   _buildLabel('Spécialité *'),
                   _buildDropdown(
                     hint: 'Choisir une spécialité',
@@ -371,8 +407,9 @@ class _AddAppointmentPageState extends State<AddAppointmentPage> {
                     icon: Icons.medical_services_outlined,
                     onChanged: _onSpecialtyChanged,
                   ),
+                  ],
 
-                  // Médecin assigné (affiché si trouvé)
+                  // Médecin assigné (affiché si spécialité choisie)
                   if (_selectedSpecialty != null) ...[
                     const SizedBox(height: 16),
                     _buildLabel('Médecin assigné'),
